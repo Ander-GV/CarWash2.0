@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: carwash-n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=${N8N_WEBHOOK_URL} # Se leerá desde tu archivo .env en la máquina virtual
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - GENERIC_TIMEZONE=America/Bogota
+    volumes:
+      # Dejamos la ruta normal de Docker para Máquinas Virtuales Linux
+      - n8n_data:/home/node/.n8n
+    restart: always
+
+  backend:
+    # La Máquina Virtual construirá la imagen del código fuente directamente
+    build: .
+    container_name: carwash-backend
+    ports:
+      - "8080:8080"
+    environment:
+      # Pasamos las variables dinámicas al contenedor desde el .env
+      - MONGO_URI=${MONGO_URI}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_SSL=${REDIS_SSL}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - DB_URL=${DB_URL}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+    restart: always
+
+  nginx:
+    # Construye el frontend con el Dockerfile.frontend que creamos
+    build: 
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: carwash-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  n8n_data:
