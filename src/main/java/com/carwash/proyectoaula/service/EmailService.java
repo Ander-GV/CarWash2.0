@@ -13,7 +13,8 @@ public class EmailService {
     private final RestTemplate restTemplate = new RestTemplate();
 
     // URL del webhook configurado en N8N
-    private final String N8N_WEBHOOK_URL = "http://localhost:5678/webhook/enviar-correo-cliente";
+    @org.springframework.beans.factory.annotation.Value("${n8n.webhook.email.url:http://localhost:5678/webhook/enviar-correo-cliente}")
+    private String N8N_WEBHOOK_URL;
 
     // Envía un enlace de actualización de datos por correo al cliente
     public void enviarTokenActualizacion(String destino, String token) {

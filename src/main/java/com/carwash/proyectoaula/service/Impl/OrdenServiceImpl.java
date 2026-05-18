@@ -61,6 +61,8 @@ public class OrdenServiceImpl implements OrdenService{
     @Autowired
     private OrdenMapper ordenMapper;
 
+    @org.springframework.beans.factory.annotation.Value("${n8n.webhook.orden.url:http://n8n:5678/webhook/d39d8412-2d0d-41ed-b051-9b988c4cedd9}")
+    private String n8nWebhookOrdenUrl;
 
     private String generarCodigo(){
         String codigo;
@@ -235,8 +237,7 @@ public class OrdenServiceImpl implements OrdenService{
                     Persona empleado = personaRepository.findByUserCode(ordenGuardada.getPersonalId()).orElse(null);
                     Persona encargado = personaRepository.findByUserCode(finalEncargadoCode).orElse(null);
                     
-                    // Dentro de Docker, el backend se comunica con n8n usando su nombre de servicio 'n8n' en lugar de 'localhost'
-                    String url = "http://n8n:5678/webhook/d39d8412-2d0d-41ed-b051-9b988c4cedd9";
+                    String url = n8nWebhookOrdenUrl;
                     HttpHeaders headers = new HttpHeaders();
                     headers.setContentType(MediaType.APPLICATION_JSON);
                     
