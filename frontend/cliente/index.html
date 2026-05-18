@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="es" x-data="clienteDashboard()" x-init="init()">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CarWash - Mi Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css" />
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <h2 class="title text-xl text-left pl-4">Mi Panel</h2>
+            <button class="nav-btn" :class="{ 'active': view === 'stats' }" @click="view = 'stats'">Actividad de Hoy</button>
+            <button class="nav-btn" :class="{ 'active': view === 'historial' }" @click="view = 'historial'">Mi Historial</button>
+            <button class="nav-btn" :class="{ 'active': view === 'analisis' }" @click="view = 'analisis'">Mis Estadísticas</button>
+            <button class="nav-btn" :class="{ 'active': view === 'profile' }" @click="view = 'profile'">Mi Perfil</button>
+            <button class="nav-btn" :class="{ 'active': view === 'vehicles' }" @click="view = 'vehicles'">Mis Vehículos</button>
+            
+            <button class="nav-btn logout-btn" @click="logout()">
+                Cerrar Sesión
+            </button>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="flex-between mb-4">
+                <h1 class="title text-left">Bienvenido, <span x-text="userData.nombre"></span></h1>
+                <span class="badge badge-gray" x-text="userData.userCode"></span>
+            </div>
+
+            <!-- Stats View (Hoy) -->
+            <div x-show="view === 'stats'" x-transition>
+                <h2 class="mb-3 text-main">Resumen de Hoy</h2>
+                <div class="grid-stats">
+                    <div class="stat-card">
+                        <span class="stat-label">Lavados Hoy</span>
+                        <span class="stat-value" x-text="statsHoy.lavados">0</span>
+                    </div>
+                    <div class="stat-card border-t-green">
+                        <span class="stat-label">Puntos de Hoy</span>
+                        <span class="stat-value" x-text="statsHoy.puntos">0</span>
+                    </div>
+                    <div class="stat-card border-t-red">
+                        <span class="stat-label">Órdenes Canceladas Hoy</span>
+                        <span class="stat-value" x-text="statsHoy.canceladas">0</span>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3 class="mb-2 text-main">Tus Lavados de Hoy</h3>
+                    <div class="grid-gap-2">
+                        <template x-for="orden in ordenesHoy" :key="orden.ordenCode">
+                            <div @click="verDetallesOrden(orden)" class="order-list-item">
+                                <div>
+                                    <div class="text-bold-dark" x-text="orden.vehiculoId"></div>
+                                    <div class="text-xs text-muted" x-text="formatDate(orden.fechaInicio)"></div>
+                                </div>
+                                <div class="text-right">
+                                    <template x-if="orden.estado === 'CANCELADO'">
+                                        <div>
+                                            <div class="text-bold-red">Cancelada</div>
+                                            <div class="text-xs text-muted line-through" x-text="'$'+orden.total.toLocaleString()"></div>
+                                        </div>
+                                    </template>
+                                    <template x-if="orden.estado !== 'CANCELADO'">
+                                        <div>
+                                            <div class="text-bold-green">+10 Pts</div>
+                                            <div class="text-xs text-muted" x-text="'$'+orden.total.toLocaleString()"></div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                        <p x-show="ordenesHoy.length === 0" class="text-muted">No tienes lavados registrados el día de hoy.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historial View -->
+            <div x-show="view === 'historial'" x-transition>
+                <h2 class="mb-3 text-main">Historial Completo</h2>
+                <div class="grid-stats">
+                    <div class="stat-card">
+                        <span class="stat-label">Lavados Totales</span>
+                        <span class="stat-value" x-text="statsHistorial.totalLavados">0</span>
+                    </div>
+                    <div class="stat-card border-t-green">
+                        <span class="stat-label">Puntos Acumulados Totales</span>
+                        <span class="stat-value" x-text="statsHistorial.puntos">0</span>
+                    </div>
+                    <div class="stat-card border-t-red">
+                        <span class="stat-label">Total Canceladas</span>
+                        <span class="stat-value" x-text="statsHistorial.totalCanceladas">0</span>
+                    </div>
+                    <div class="stat-card border-t-warning">
+                        <span class="stat-label">Última Visita</span>
+                        <span class="stat-value text-xl lh-loose" x-text="statsHistorial.ultimaVisita">-</span>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3 class="mb-2 text-main">Todos los Registros</h3>
+                    <div class="grid-gap-2">
+                        <template x-for="orden in ordenesHistorial" :key="orden.ordenCode">
+                            <div @click="verDetallesOrden(orden)" class="order-list-item">
+                                <div>
+                                    <div class="text-bold-dark" x-text="orden.vehiculoId"></div>
+                                    <div class="text-xs text-muted" x-text="formatDate(orden.fechaInicio)"></div>
+                                </div>
+                                <div class="text-right">
+                                    <template x-if="orden.estado === 'CANCELADO'">
+                                        <div>
+                                            <div class="text-bold-red">Cancelada</div>
+                                            <div class="text-xs text-muted line-through" x-text="'$'+orden.total.toLocaleString()"></div>
+                                        </div>
+                                    </template>
+                                    <template x-if="orden.estado !== 'CANCELADO'">
+                                        <div>
+                                            <div class="text-bold-green">+10 Pts</div>
+                                            <div class="text-xs text-muted" x-text="'$'+orden.total.toLocaleString()"></div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                        <p x-show="ordenesHistorial.length === 0" class="text-muted">Aún no tienes lavados registrados en el historial.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Análisis Power BI View -->
+            <div x-show="view === 'analisis'" x-transition class="panel-section">
+                <div style="margin-bottom: 1.5rem;">
+                    <h3 style="color: #1e293b; margin-bottom: 0.5rem;">Mis Estadísticas (Power BI)</h3>
+                    <p class="text-muted font-xs">Este reporte está integrado a través de Power BI.</p>
+                </div>
+                <div style="background: #f1f5f9; border-radius: 0.5rem; border: 1px dashed #cbd5e1; padding: 0.5rem; min-height: 400px; display: flex; align-items: center; justify-content: center;">
+                    <p class="text-muted text-lg">Este panel está habilitado únicamente para administradores.</p>
+                </div>
+            </div>
+
+            <!-- Profile View -->
+            <div x-show="view === 'profile'" x-transition class="panel-section">
+                <h3 class="mb-3 text-main">Mis Datos Personales</h3>
+                
+                <form @submit.prevent="updateProfile" class="form-stack max-w-600">
+                    <div>
+                        <label class="field-label">Nombre</label>
+                        <input type="text" x-model="userData.nombre" class="field-input" required>
+                    </div>
+                    <div>
+                        <label class="field-label">Apellido</label>
+                        <input type="text" x-model="userData.apellido" class="field-input" required>
+                    </div>
+                    <div>
+                        <label class="field-label">Teléfono</label>
+                        <input type="tel" x-model="userData.telefono" class="field-input" required>
+                    </div>
+                    <div>
+                        <label class="field-label">Dirección</label>
+                        <input type="text" x-model="userData.direccion" class="field-input" required>
+                    </div>
+                    <div>
+                        <label class="field-label">Correo Electrónico (Notificaciones)</label>
+                        <input type="email" x-model="userData.correo" class="field-input" required>
+                        <p class="text-muted font-xs mt-05">Puedes cambiar este correo para notificaciones. Tu inicio de sesión de Google seguirá intacto.</p>
+                    </div>
+
+                    <p x-show="updateMsg" x-text="updateMsg" :class="updateSuccess ? 'alert alert-success' : 'alert alert-error'" class="mt-2"></p>
+
+                    <button type="submit" class="btn btn-sky" :disabled="loading">
+                        <span x-show="!loading">Guardar Cambios</span>
+                        <span x-show="loading" class="spinner"></span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Vehicles View -->
+            <div x-show="view === 'vehicles'" x-transition>
+                <div class="panel-section mb-4">
+                    <div class="flex-between mb-3">
+                        <h3 class="text-main m-0">Mis Vehículos</h3>
+                        <input type="text" x-model="searchVehiculo" class="field-input max-w-250" placeholder="Buscar por placa o marca...">
+                    </div>
+                    <div class="grid-auto-250">
+                        <template x-for="veh in vehiculosFiltrados()" :key="veh.placa">
+                            <div class="stat-card p-4-card border-t-blue">
+                                <div class="text-xl text-main mb-1" x-text="veh.placa"></div>
+                                <div class="text-muted text-sm" x-text="veh.marca + ' ' + veh.modelo + ' (' + veh.year + ')'"></div>
+                                <div class="text-muted text-sm" x-text="'Color: ' + veh.color"></div>
+                                <div class="mt-1"><span class="badge badge-blue" x-text="veh.tipoVehiculo?.nombre"></span></div>
+                                <div class="mt-2 flex gap-2">
+                                    <button @click="editarVehiculo(veh)" class="btn btn-green btn-xs">Editar</button>
+                                    <button @click="eliminarVehiculo(veh.placa)" class="btn btn-danger btn-xs">Eliminar</button>
+                                </div>
+                            </div>
+                        </template>
+                        <div x-show="vehiculos.length === 0" class="col-span-full text-muted">No tienes vehículos registrados.</div>
+                        <div x-show="vehiculos.length > 0 && vehiculosFiltrados().length === 0" class="col-span-full text-muted">No se encontraron vehículos con esa búsqueda.</div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3 class="mb-3 text-main" x-text="vehiculoMode === 'create' ? 'Registrar Nuevo Vehículo' : 'Editar Vehículo'"></h3>
+                    <form @submit.prevent="registrarVehiculo" style="max-width: 600px;">
+                        <div class="grid-cols-2" style="margin-bottom: 1rem;">
+                            <div>
+                                <label class="field-label">Placa</label>
+                                <input type="text" x-model="formVehiculo.placa" class="field-input" required style="text-transform: uppercase;" :disabled="vehiculoMode === 'edit'">
+                            </div>
+                            <div>
+                                <label class="field-label">Marca</label>
+                                <input type="text" x-model="formVehiculo.marca" class="field-input" required>
+                            </div>
+                            <div>
+                                <label class="field-label">Modelo</label>
+                                <input type="text" x-model="formVehiculo.modelo" class="field-input" required>
+                            </div>
+                            <div>
+                                <label class="field-label">Color</label>
+                                <input type="text" x-model="formVehiculo.color" class="field-input" required>
+                            </div>
+                            <div>
+                                <label class="field-label">Año</label>
+                                <input type="number" x-model="formVehiculo.year" class="field-input" required min="1900" max="2100">
+                            </div>
+                            <div>
+                                <label class="field-label">Tipo de Vehículo</label>
+                                <select x-model="formVehiculo.tipoVehiculo.id" class="field-select" required>
+                                    <option value="">Seleccione tipo...</option>
+                                    <template x-for="tv in tiposVehiculo" :key="tv.id">
+                                        <option :value="tv.id" x-text="tv.nombre"></option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+
+                        <p x-show="vehiculoMsg" x-text="vehiculoMsg" :class="vehiculoSuccess ? 'alert alert-success' : 'alert alert-error'" style="margin-bottom: 1rem;"></p>
+
+                        <button type="submit" class="btn btn-sky" :disabled="vehiculoLoading">
+                            <span x-show="!vehiculoLoading" x-text="vehiculoMode === 'create' ? 'Registrar Vehículo' : 'Guardar Cambios'"></span>
+                            <span x-show="vehiculoLoading" class="spinner"></span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Detalles de Orden -->
+    <div x-cloak x-show="modalOrden.show" class="modal-overlay" x-transition>
+        <div class="modal-content" style="max-width: 35rem;" @click.stop>
+            <div class="modal-header flex-between">
+                <h3 class="modal-title">Detalles del Lavado</h3>
+                <button @click="modalOrden.show = false" class="btn-ghost">✕</button>
+            </div>
+            <template x-if="modalOrden.orden">
+                <div>
+                    <div class="grid-cols-2" style="margin-bottom: 1rem; gap: 1rem;">
+                        <div>
+                            <div class="text-muted font-xs">Vehículo</div>
+                            <div class="td-strong" x-text="modalOrden.orden.vehiculoId"></div>
+                        </div>
+                        <div>
+                            <div class="text-muted font-xs">Orden</div>
+                            <div class="td-strong" x-text="'#' + modalOrden.orden.ordenCode.substring(modalOrden.orden.ordenCode.length-4)"></div>
+                        </div>
+                        <div>
+                            <div class="text-muted font-xs">Empleado Asignado</div>
+                            <div class="td-strong" x-text="modalOrden.empleadoNombre || modalOrden.orden.personalId"></div>
+                        </div>
+                        <div>
+                            <div class="text-muted font-xs">Estado</div>
+                            <div class="td-strong" x-text="modalOrden.orden.estado.replace('_', ' ')"></div>
+                        </div>
+                        <div>
+                            <div class="text-muted font-xs">Hora de Inicio</div>
+                            <div class="td-strong" x-text="formatDateTime(modalOrden.orden.fechaInicio)"></div>
+                        </div>
+                        <div>
+                            <div class="text-muted font-xs">Hora de Fin</div>
+                            <div class="td-strong" x-text="formatDateTime(modalOrden.orden.fechaFin)"></div>
+                        </div>
+                    </div>
+
+                    <div class="text-muted font-xs" style="margin-bottom: 0.5rem;">Servicios Realizados</div>
+                    <div style="background: #f8fafc; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
+                        <template x-for="srv in modalOrden.orden.servicio">
+                            <div style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between;">
+                                <span x-text="srv.nombre + ' (' + srv.tipoDeVehiculo + ')'"></span>
+                                <span style="font-weight: 600;" x-text="'$' + srv.precioFinal.toLocaleString()"></span>
+                            </div>
+                        </template>
+                    </div>
+                    
+                    <div style="margin-top: 1rem; text-align: right; font-size: 1.25rem; font-weight: 700; color: #1e293b;">
+                        Total: $<span x-text="modalOrden.orden.total.toLocaleString()"></span>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <script src="cliente.js"></script>
+</body>
+</html>

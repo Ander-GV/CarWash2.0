@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="es" x-data="encargadoPage()" x-init="init()">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panel Encargado - CarWash</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css" />
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body>
+    <header class="topbar">
+        <h1 class="topbar-title">CarWash <span class="text-secondary">Encargado</span></h1>
+        <div class="header-actions">
+            <span class="user-name" x-text="currentUser"></span>
+            <button @click="logout" class="btn btn-ghost btn-small">Cerrar sesión</button>
+        </div>
+    </header>
+
+    <main class="page-content">
+        <div class="flex-between">
+            <div>
+                <h2 class="section-title">Control de Lavados</h2>
+                <p class="text-muted section-subtitle">Crea órdenes y supervisa el estado de los vehículos.</p>
+            </div>
+            <div class="flex gap-2 items-center">
+                <div class="card" style="padding: 0.5rem 1rem; border-left: 4px solid var(--secondary); background: #f8fafc; text-align: right;">
+                    <div class="text-xs text-muted uppercase font-bold">Estadísticas del Turno</div>
+                    <div class="text-bold-dark"><span x-text="ordenesDelTurno().length"></span> Lavados</div>
+                    <div class="text-bold-red"><span x-text="canceladasPurasDelTurno().length"></span> Canceladas</div>
+                    <div class="text-bold-warning" style="color: #f97316;"><span x-text="incidenciasCerradasDelTurno().length"></span> Incidencias</div>
+                    <div style="font-weight: bold; color: var(--green); font-size: 1.1rem;">$<span x-text="totalDelTurno()"></span></div>
+                </div>
+                <button @click="openModal('newOrder')" class="btn btn-sky">
+                    + Nueva Orden de Lavado
+                </button>
+            </div>
+        </div>
+
+        <p x-cloak x-show="globalError" x-transition x-text="globalError" class="alert alert-error alert-margin"></p>
+        <p x-cloak x-show="globalSuccess" x-transition x-text="globalSuccess" class="alert alert-success alert-margin"></p>
+
+        <!-- Kanban Board de Órdenes -->
+        
+        <!-- Tabs -->
+        <div class="tabs">
+            <div class="tab" :class="{ 'active': view === 'ordenes' }" @click="view = 'ordenes'">Órdenes de Lavado</div>
+            <div class="tab" :class="{ 'active': view === 'clientes' }" @click="view = 'clientes'">Gestión de Clientes</div>
+            <div class="tab" :class="{ 'active': view === 'personal' }" @click="view = 'personal'">Gestión de Personal</div>
+            <div class="tab" :class="{ 'active': view === 'vehiculos' }" @click="view = 'vehiculos'; buscarVehiculosGlobal()">Gestión de Vehículos</div>
+            <div class="tab" :class="{ 'active': view === 'analisis' }" @click="view = 'analisis'">Análisis (Power BI)</div>
+        </div>
+
+        <div class="kanban-board" x-show="view === 'ordenes'" x-cloak>
+            <template x-for="est in estados" :key="est.nombre">
+                <div class="kanban-col" :style="est.esIncidencia ? 'background-color: #fef2f2;' : ''">
+                    <h3 class="kanban-title" :style="'color: ' + est.textColor" x-text="est.nombre.replace('_', ' ')"></h3>
+                    
+                    <template x-for="orden in ordenesPaginadasPorEstado(est.nombre)" :key="orden.ordenCode">
+                        <div class="order-card" :style="est.esIncidencia ? 'border-left: 4px solid #ef4444;' : (orden.estado === 'PENDIENTE' ? 'border-left: 4px solid var(--primary);' : '')">
+                            <!-- Header -->
+                            <div class="order-header">
+                                <span x-text="orden.vehiculoId"></span>
+                                <span class="badge" :style="'background:' + est.color + '; color:' + est.textColor" x-text="'#'+orden.ordenCode.substring(orden.ordenCode.length-4)"></span>
+                            </div>
+                            <!-- Details -->
+                            <div class="order-details">
+                                <div x-show="est.orden === 1">Cliente: <span x-text="getNombreCliente(orden.clienteId)"></span></div>
+                                <div>Empleado: <span x-text="getNombreEmpleado(orden.personalId)"></span></div>
+                                <div x-show="!est.esFinal && est.orden > 1">Inicio: <span x-text="formatTime(orden.fechaInicio)"></span></div>
+                                <div x-show="est.esFinal" class="mt-1 font-bold">Total: $<span x-text="orden.total"></span></div>
+                                
+                                <div x-show="est.orden === 1" class="mt-05">
+                                    <strong>Servicios:</strong>
+                                    <template x-for="srv in orden.servicio">
+                                        <span class="badge" style="background:#f1f5f9; font-weight:normal; margin-right:4px;" x-text="srv.nombre"></span>
+                                    </template>
+                                </div>
+
+                                <div x-show="est.esIncidencia" style="margin-top: 0.5rem; color: #ef4444; font-weight: 600; font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;" x-text="orden.descripcionProblema"></div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <button x-show="est.nombre === 'PENDIENTE'" @click="cancelarOrden(orden.ordenCode)" class="btn btn-danger btn-block btn-xs mt-1" style="background-color: #ef4444; border-color: #ef4444; color: white; padding: 0.25rem;">
+                                Cancelar Orden
+                            </button>
+                            <button x-show="est.nombre === 'ESPERANDO_CONFIRMACION'" @click="confirmarOrden(orden.ordenCode)" class="btn btn-green btn-block btn-xs mt-1">
+                                Aprobar Lavado y Notificar
+                            </button>
+                            <button x-show="est.esIncidencia && !est.esFinal" @click="abrirModalRevision(orden)" class="btn btn-danger btn-block btn-xs mt-1" style="background-color: #ef4444; border-color: #ef4444; color: white;">
+                                Revisar Incidencia
+                            </button>
+                        </div>
+                    </template>
+                    <div x-show="ordenesPorEstado(est.nombre).length === 0" class="text-muted text-center mt-1" class="text-sm">Vacío</div>
+                    
+                    <!-- Controles de paginación por columna -->
+                    <div x-show="ordenesPorEstado(est.nombre).length > elementosPorPagina" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 0.5rem; border-top: 1px dashed #cbd5e1;">
+                        <button @click="cambiarPagina(est.nombre, -1)" :disabled="!hayPaginaAnterior(est.nombre)" class="btn btn-ghost btn-xs" style="padding: 0.2rem 0.5rem; border: 1px solid #e2e8f0; background: white; border-radius: 4px;">&laquo; Ant</button>
+                        <span style="font-size: 0.75rem; font-weight: 600; color: #64748b;" x-text="obtenerPagina(est.nombre) + ' / ' + Math.ceil(ordenesPorEstado(est.nombre).length / elementosPorPagina)"></span>
+                        <button @click="cambiarPagina(est.nombre, 1)" :disabled="!hayPaginaSiguiente(est.nombre)" class="btn btn-ghost btn-xs" style="padding: 0.2rem 0.5rem; border: 1px solid #e2e8f0; background: white; border-radius: 4px;">Sig &raquo;</button>
+                    </div>
+                </div>
+            </template>
+        </div>
+    
+        <!-- CRUD Views -->
+        <div x-cloak x-show="view === 'clientes' || view === 'personal'" class="card" class="mt-2">
+            <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; max-width: 24rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    <input type="text" x-model="searchQuery" class="field-input" placeholder="Buscar por documento o correo...">
+                </div>
+                <button @click="openCrudModal('create')" class="btn btn-sky" style="white-space: nowrap;">+ Registrar <span x-text="view === 'clientes' ? 'Cliente' : 'Empleado'"></span></button>
+            </div>
+            <div class="table-wrapper">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>Código / Doc</th>
+                        <th>Nombre Completo</th>
+                        <th>Contacto</th>
+                        <th>Estado</th>
+                        <th class="text-right">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <template x-for="p in getFilteredData()" :key="p.userCode || p.documento">
+                        <tr>
+                            <td><div class="td-strong" x-text="p.userCode || p.documento"></div></td>
+                            <td>
+                                <div class="td-strong" x-text="p.nombre + ' ' + p.apellido"></div>
+                                <div class="font-xs text-muted" x-show="view === 'clientes'" x-text="'Doc: ' + p.documento"></div>
+                            </td>
+                            <td>
+                                <div class="font-xs" x-text="'Tel: ' + p.telefono"></div>
+                                <div class="font-xs text-muted" x-text="p.correo"></div>
+                            </td>
+                            <td>
+                                <span x-text="p.activo ? 'Activo' : 'Inactivo'" :class="p.activo ? 'text-ok' : 'text-bad'"></span>
+                                <template x-if="view === 'personal'">
+                                    <div class="font-xs" class="mt-05">
+                                        Disp: <span x-text="p.disponibleHoy ? 'Sí' : 'No'" :class="p.disponibleHoy ? 'text-ok' : 'text-warning'"></span>
+                                    </div>
+                                </template>
+                            </td>
+                            <td class="table-actions">
+                                <button @click="openCrudModal('edit', p)" class="btn btn-green btn-xs">Editar</button>
+                                <button @click="eliminarPersona(p)" class="btn btn-danger btn-xs">Eliminar</button>
+                            </td>
+                        </tr>
+                    </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- Gestión Vehículos View -->
+        <div x-cloak x-show="view === 'vehiculos' || view === 'VEHICULO'" class="card" class="mt-2">
+            <div style="margin-bottom: 1.5rem; display: flex; align-items: flex-end; gap: 1rem; max-width: 40rem;">
+                <div class="flex-1">
+                    <label class="field-label">1. Documento del Cliente</label>
+                    <input type="text" x-model="searchVehiculoDoc" class="field-input" placeholder="Ej. 12345678">
+                </div>
+                <div class="flex-1">
+                    <label class="field-label">2. Placa del Vehículo</label>
+                    <input type="text" x-model="searchVehiculoPlaca" class="field-input" placeholder="Ej. ABC-123" class="uppercase">
+                </div>
+                <button @click="buscarVehiculoEspecifico()" class="btn btn-sky">Buscar Vehículo</button>
+            </div>
+            
+            <div x-show="vehiculosDelCliente.length > 0" class="mb-2">
+                <h4 class="text-main mb-1">Vehículo(s) Encontrado(s) (Propietario: <span class="text-primary" x-text="clienteEncontradoVehiculos?.nombre + ' ' + clienteEncontradoVehiculos?.apellido + ' | Doc: ' + clienteEncontradoVehiculos?.documento + ' | Codigo: ' + clienteEncontradoVehiculos?.userCode"></span>)</h4>
+                <div class="table-wrapper">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Placa</th>
+                            <th>Vehículo</th>
+                            <th>Color</th>
+                            <th>Tipo</th>
+                            <th class="text-right">Acciones</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="veh in vehiculosDelCliente" :key="veh.placa">
+                                <tr>
+                                    <td><div class="td-strong" x-text="veh.placa"></div></td>
+                                    <td><div x-text="veh.marca + ' ' + veh.modelo + ' (' + veh.year + ')'"></div></td>
+                                    <td><div x-text="veh.color"></div></td>
+                                    <td><span class="badge" class="badge-blue" x-text="veh.tipoVehiculo?.nombre"></span></td>
+                                    <td class="table-actions">
+                                        <button @click="openModalVehiculo('edit', veh)" class="btn btn-green btn-xs">Editar</button>
+                                        <button @click="eliminarVehiculoGlobal(veh.placa)" class="btn btn-danger btn-xs">Eliminar</button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-2" x-show="historialOrdenesVehiculo.length > 0">
+                    <h5 class="text-main mb-1">Últimas Órdenes del Vehículo (Búsqueda por Placa)</h5>
+                    <div class="table-wrapper">
+                        <table class="table" style="font-size: 0.85rem;">
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Fecha</th>
+                                    <th>Estado</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="ord in historialOrdenesVehiculo" :key="ord.ordenCode">
+                                    <tr>
+                                        <td x-text="ord.ordenCode"></td>
+                                        <td x-text="ord.fechaInicio ? new Date(ord.fechaInicio).toLocaleDateString() : ''"></td>
+                                        <td><span class="badge" class="badge-sky" x-text="ord.estado"></span></td>
+                                        <td class="td-strong" x-text="'$' + ord.total"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination for History -->
+                    <div class="pagination mt-1" x-show="historialTotalPages > 0" style="justify-content: flex-end; display: flex; align-items: center;">
+                        <button class="btn btn-sky btn-xs" style="padding: 0.2rem 0.6rem; border-radius: 4px;" @click="cargarHistorialVehiculo(historialPage - 1)" :disabled="historialPage === 0">&laquo; Anterior</button>
+                        <span class="text-muted" style="font-size: 0.85rem; margin: 0 10px;" x-text="'Página ' + (historialPage + 1) + ' de ' + Math.max(1, historialTotalPages)"></span>
+                        <button class="btn btn-sky btn-xs" style="padding: 0.2rem 0.6rem; border-radius: 4px;" @click="cargarHistorialVehiculo(historialPage + 1)" :disabled="historialPage >= historialTotalPages - 1">Siguiente &raquo;</button>
+                    </div>
+                </div>
+            </div>
+            <div x-show="searchVehiculoDoc && searchVehiculoPlaca && searchIntento && !vehiculoBuscado" class="text-muted" class="mt-2">
+                No se encontró un vehículo activo con esa placa para este cliente.
+            </div>
+        </div>
+
+        <!-- Análisis Power BI -->
+        <div x-cloak x-show="view === 'analisis'" class="card" class="mt-2">
+            <div class="mb-3">
+                <h3 class="text-main mb-1">Reportes y Métricas Operativas</h3>
+                <p class="text-muted font-xs">Este reporte está integrado a través de Power BI.</p>
+            </div>
+            <div style="background: #f1f5f9; border-radius: 0.5rem; border: 1px dashed #cbd5e1; padding: 0.5rem;">
+                <!-- Dashboard de Power BI Integrado con barra oculta -->
+                <div style="width: 100%; height: 600px; overflow: hidden; position: relative; border-radius: 0.25rem;">
+                    <iframe title="PowerBiPa" width="100%" height="638" src="https://app.powerbi.com/view?r=eyJrIjoiMzQ2N2UxZDQtNjg0Mi00ODhkLWFiMDEtYzhmZDRiOGNjYzlhIiwidCI6IjlkMTJiZjNmLWU0ZjYtNDdhYi05MTJmLTFhMmYwZmM0OGFhNCIsImMiOjR9&pageName=68d2e13a1176cd19d625" frameborder="0" allowFullScreen="true" style="position: absolute; top: 0; left: 0; border: none;"></iframe>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    
+    <!-- Modal CRUD Personas -->
+    <div x-cloak x-show="modalCrud && modalCrud.show" class="modal-overlay" x-transition>
+        <div class="modal-content" class="max-w-48" @click.stop>
+            <div class="modal-header">
+                <h3 class="modal-title" x-text="(modalCrud.mode === 'create' ? 'Crear ' : 'Editar ') + (view === 'clientes' ? 'Cliente' : 'Empleado')"></h3>
+            </div>
+            <form @submit.prevent="submitCrudForm">
+                <div class="grid-cols-2">
+                    <div><label class="field-label">Nombre</label><input type="text" x-model="formCrud.nombre" class="field-input" required></div>
+                    <div><label class="field-label">Apellido</label><input type="text" x-model="formCrud.apellido" class="field-input" required></div>
+                    <div><label class="field-label">Documento</label><input type="text" x-model="formCrud.documento" class="field-input" required :disabled="modalCrud.mode === 'edit'"></div>
+                    <div><label class="field-label">Teléfono</label><input type="tel" x-model="formCrud.telefono" class="field-input" required></div>
+                    <div><label class="field-label">Correo</label><input type="email" x-model="formCrud.correo" class="field-input" required></div>
+                    <div><label class="field-label">Dirección</label><input type="text" x-model="formCrud.direccion" class="field-input" required></div>
+                    
+                    <template x-if="view === 'personal' && modalCrud.mode === 'create'">
+                        <div><label class="field-label">Contraseña</label><input type="password" x-model="formCrud.password" class="field-input" required></div>
+                    </template>
+                </div>
+                <div class="form-stack mt-1" class="flex-row gap-4">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" id="activoCrud" x-model="formCrud.activo" class="checkbox-input">
+                        <label for="activoCrud" class="checkbox-label">Usuario Activo</label>
+                    </div>
+                    <template x-if="view === 'personal'">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" id="disponibleCrud" x-model="formCrud.disponibleHoy" class="checkbox-input">
+                            <label for="disponibleCrud" class="checkbox-label text-warning">Disponible para lavar hoy</label>
+                        </div>
+                    </template>
+                </div>
+                <p x-cloak x-show="modalCrud.error" x-text="modalCrud.error" class="alert alert-error mt-1"></p>
+                <div class="modal-footer">
+                    <button type="button" @click="modalCrud.show = false" class="btn btn-ghost">Cancelar</button>
+                    <button type="submit" class="btn btn-sky" :disabled="modalCrud.loading">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal CRUD Vehiculo Global -->
+    <div x-cloak x-show="modalVehiculo.show" class="modal-overlay" x-transition>
+        <div class="modal-content" class="max-w-48" @click.stop>
+            <div class="modal-header">
+                <h3 class="modal-title" x-text="(modalVehiculo.mode === 'create' ? 'Crear ' : 'Editar ') + 'Vehículo'"></h3>
+            </div>
+            <form @submit.prevent="submitVehiculoGlobal">
+                <div class="grid-cols-2">
+                    <div><label class="field-label">Placa</label><input type="text" x-model="formVehiculoGlobal.placa" class="field-input" required class="uppercase" :disabled="modalVehiculo.mode === 'edit'"></div>
+                    <div><label class="field-label">Marca</label><input type="text" x-model="formVehiculoGlobal.marca" class="field-input" required></div>
+                    <div><label class="field-label">Modelo</label><input type="text" x-model="formVehiculoGlobal.modelo" class="field-input" required></div>
+                    <div><label class="field-label">Color</label><input type="text" x-model="formVehiculoGlobal.color" class="field-input" required></div>
+                    <div><label class="field-label">Año</label><input type="number" x-model="formVehiculoGlobal.year" class="field-input" required></div>
+                    <div>
+                        <label class="field-label">Tipo</label>
+                        <select x-model="formVehiculoGlobal.tipoVehiculo.id" class="field-input" required>
+                            <option value="">Seleccione...</option>
+                            <template x-for="tv in tiposVehiculo" :key="tv.id">
+                                <option :value="tv.id" x-text="tv.nombre"></option>
+                            </template>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-stack mt-1" class="flex-row gap-4">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" id="activoVeh" x-model="formVehiculoGlobal.activo" class="checkbox-input">
+                        <label for="activoVeh" class="checkbox-label">Vehículo Activo</label>
+                    </div>
+                </div>
+                <p x-cloak x-show="modalVehiculo.error" x-text="modalVehiculo.error" class="alert alert-error mt-1"></p>
+                <div class="modal-footer">
+                    <button type="button" @click="modalVehiculo.show = false" class="btn btn-ghost">Cancelar</button>
+                    <button type="submit" class="btn btn-sky" :disabled="modalVehiculo.loading">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Nueva Orden -->
+    <div x-cloak x-show="modal.show" class="modal-overlay" x-transition>
+        <div class="modal-content" style="max-width: 40rem;" @click.stop>
+            <div class="modal-header flex-between">
+                <h3 class="modal-title">Nueva Orden de Lavado</h3>
+                <button @click="closeModal" class="btn-ghost" >✕</button>
+            </div>
+            
+            <form @submit.prevent="submitOrder">
+                
+                <!-- Step 1: Buscar Cliente -->
+                <div class="panel-section" class="p-3 mb-2">
+                    <label class="field-label">1. Buscar Cliente (Documento)</label>
+                    <div class="flex gap-2">
+                        <input type="text" x-model="orderForm.clienteDoc" class="field-input" placeholder="Ingrese documento">
+                        <button type="button" @click="buscarCliente" class="btn btn-sky" :disabled="modal.loading">Buscar</button>
+                    </div>
+                    <div x-show="orderForm.cliente" class="mt-1 alert alert-success" class="p-2-small" style="padding: 0.5rem;">
+                        Cliente seleccionado: <strong x-text="orderForm.cliente?.nombre + ' ' + orderForm.cliente?.apellido"></strong>
+                    </div>
+                </div>
+
+                <!-- Step 2: Vehículo -->
+                <div class="panel-section" class="p-3 mb-2" x-show="orderForm.cliente">
+                    <div class="flex-between" class="mb-1">
+                        <label class="field-label" class="m-0">2. Seleccionar Vehículo</label>
+                        <button type="button" @click="mostrarRegistroVehiculo = !mostrarRegistroVehiculo" class="btn btn-ghost btn-xs text-primary">
+                            <span x-text="mostrarRegistroVehiculo ? 'Cancelar Registro' : '+ Registrar Nuevo Vehículo'"></span>
+                        </button>
+                    </div>
+
+                    <!-- Lista de vehículos del cliente -->
+                    <div x-show="!mostrarRegistroVehiculo">
+                        <input type="text" list="vehiculosList" x-model="orderForm.placa" class="field-input" placeholder="Buscar o seleccionar placa..." :required="!mostrarRegistroVehiculo">
+                        <datalist id="vehiculosList">
+                            <template x-for="veh in vehiculosCliente" :key="veh.placa">
+                                <option :value="veh.placa" x-text="veh.placa + ' - ' + veh.marca + ' ' + veh.modelo + (veh.tipoVehiculo?.nombre ? ' (' + veh.tipoVehiculo.nombre + ')' : '')"></option>
+                            </template>
+                        </datalist>
+                        <p x-show="vehiculosCliente.length === 0" class="text-muted font-xs mt-1">El cliente no tiene vehículos registrados.</p>
+                    </div>
+
+                    <!-- Formulario para registrar nuevo vehículo -->
+                    <div x-show="mostrarRegistroVehiculo" style="background: #f8fafc; padding: 1rem; border-radius: 0.5rem; margin-top: 0.5rem; border: 1px dashed #cbd5e1;">
+                        <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 1rem;">Registrar Vehículo para <span x-text="orderForm.cliente?.nombre"></span></h4>
+                        <div class="grid-cols-2" class="gap-3" style="gap: 0.75rem;">
+                            <div>
+                                <label class="field-label font-xs">Placa</label>
+                                <input type="text" x-model="formVehiculo.placa" class="field-input" class="uppercase">
+                            </div>
+                            <div>
+                                <label class="field-label font-xs">Marca</label>
+                                <input type="text" x-model="formVehiculo.marca" class="field-input">
+                            </div>
+                            <div>
+                                <label class="field-label font-xs">Modelo</label>
+                                <input type="text" x-model="formVehiculo.modelo" class="field-input">
+                            </div>
+                            <div>
+                                <label class="field-label font-xs">Color</label>
+                                <input type="text" x-model="formVehiculo.color" class="field-input">
+                            </div>
+                            <div>
+                                <label class="field-label font-xs">Año</label>
+                                <input type="number" x-model="formVehiculo.year" class="field-input" min="1900" max="2100">
+                            </div>
+                            <div>
+                                <label class="field-label font-xs">Tipo</label>
+                                <select x-model="formVehiculo.tipoVehiculo.id" class="field-select">
+                                    <option value="">Seleccione tipo...</option>
+                                    <template x-for="tv in tiposVehiculo" :key="tv.id">
+                                        <option :value="tv.id" x-text="tv.nombre"></option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="button" @click="registrarVehiculo" class="btn btn-sky btn-sm mt-1" :disabled="modal.loading">
+                            Guardar y Seleccionar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Servicios y Empleado -->
+                <div class="panel-section" class="p-3 mb-2" x-show="orderForm.placa.length >= 5">
+                    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        <div>
+                            <label class="field-label">3. Empleado Asignado</label>
+                            <select x-model="orderForm.empleadoId" class="field-select" required>
+                                <option value="">Seleccione empleado disponible...</option>
+                                <template x-for="emp in empleados" :key="emp.userCode">
+                                    <option :value="emp.userCode" x-text="emp.nombre + ' ' + emp.apellido"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="field-label" class="mb-1">4. Servicios a Realizar</label>
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem; background: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
+                                <template x-for="srv in serviciosPaginados()" :key="srv.serviceCode">
+                                    <label class="flex items-center gap-2 cursor-pointer" style="padding: 0.5rem 0;">
+                                        <input type="checkbox" :value="srv.serviceCode" x-model="orderForm.serviciosSeleccionados" style="width: 1.25rem; height: 1.25rem; cursor: pointer; accent-color: var(--primary);">
+                                        <div>
+                                            <span x-text="srv.nombre" class="font-medium text-main"></span>
+                                            <span x-show="srv.descripcion" x-text="' - ' + srv.descripcion" class="text-muted text-xs"></span>
+                                        </div>
+                                    </label>
+                                </template>
+                            </div>
+                            
+                            <!-- Paginación de Servicios -->
+                            <div x-show="servicios.length > serviciosPorPagina" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                                <button type="button" @click="cambiarPaginaServicios(-1)" :disabled="paginaServicios === 1" class="btn btn-ghost" style="border: 1px solid #e2e8f0; background: white; padding: 0.4rem 0.8rem;">&laquo; Anterior</button>
+                                <span style="font-weight: 600; color: #64748b; font-size: 0.875rem;" x-text="paginaServicios + ' / ' + Math.ceil(servicios.length / serviciosPorPagina)"></span>
+                                <button type="button" @click="cambiarPaginaServicios(1)" :disabled="paginaServicios >= Math.ceil(servicios.length / serviciosPorPagina)" class="btn btn-ghost" style="border: 1px solid #e2e8f0; background: white; padding: 0.4rem 0.8rem;">Siguiente &raquo;</button>
+                            </div>
+                            
+                            <p x-show="servicios.length === 0" class="text-muted font-xs mt-1">No hay servicios disponibles.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <p x-cloak x-show="modal.error" x-text="modal.error" class="alert alert-error mt-1"></p>
+
+                <div class="modal-footer">
+                    <button type="button" @click="closeModal" class="btn btn-ghost">Cancelar</button>
+                    <button type="submit" class="btn btn-sky" :disabled="!isOrderValid() || modal.loading">
+                        <span x-cloak x-show="!modal.loading">Crear Orden</span>
+                        <span x-cloak x-show="modal.loading" class="spinner"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Detalles de Orden (Encargado) -->
+    <div x-cloak x-show="modalOrden.show" class="modal-overlay" x-transition>
+        <div class="modal-content" class="max-w-35" @click.stop>
+            <div class="modal-header flex-between">
+                <h3 class="modal-title">Detalles de la Orden</h3>
+                <button @click="modalOrden.show = false" class="btn-ghost" >✕</button>
+            </div>
+            <template x-if="modalOrden.orden">
+                <div>
+                    <div class="grid-cols-2" style="margin-bottom: 1rem; gap: 1rem;">
+                        <div>
+                            <div class="text-muted font-xs">Vehículo</div>
+                            <div class="td-strong" x-text="modalOrden.orden.vehiculoId"></div>
+                        </div>
+                        <div>
+                            <div class="text-muted font-xs">Orden</div>
+                            <div class="td-strong" x-text="'#' + modalOrden.orden.ordenCode.substring(modalOrden.orden.ordenCode.length-4)"></div>
+                        </div>
+                        <div>
+                            <div class="text-muted font-xs">Cliente</div>
+                            <div class="td-strong" x-text="getNombreCliente(modalOrden.orden.clienteId)"></div>
+                        </div>
+                        <div>
+                            <div class="text-muted font-xs">Empleado Asignado</div>
+                            <div class="td-strong" x-text="getNombreEmpleado(modalOrden.orden.personalId)"></div>
+                        </div>
+                        <div>
+                            <div class="text-muted font-xs">Hora de Inicio</div>
+                            <div class="td-strong" x-text="formatDateTime(modalOrden.orden.fechaInicio)"></div>
+                        </div>
+                        <div>
+                            <div class="text-muted font-xs">Hora de Fin</div>
+                            <div class="td-strong" x-text="formatDateTime(modalOrden.orden.fechaFin)"></div>
+                        </div>
+                    </div>
+
+                    <div class="text-muted font-xs" class="mb-1">Servicios Asignados</div>
+                    <div style="background: #f8fafc; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
+                        <template x-for="srv in modalOrden.orden.servicio">
+                            <div style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between;">
+                                <span x-text="srv.nombre + ' (' + srv.tipoDeVehiculo + ')'"></span>
+                                <span class="font-bold" x-text="'$' + srv.precioFinal.toLocaleString()"></span>
+                            </div>
+                        </template>
+                    </div>
+                    
+                    <div style="margin-top: 1rem; text-align: right; font-size: 1.25rem; font-weight: 700; color: #1e293b;">
+                        Total: $<span x-text="modalOrden.orden.total.toLocaleString()"></span>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- Modal Revisión de Problema (Encargado) -->
+    <div x-cloak x-show="modalRevision.show" class="modal-overlay" x-transition>
+        <div class="modal-content" class="max-w-35" @click.stop>
+            <div class="modal-header">
+                <h3 class="modal-title" class="text-danger">Revisar y Notificar Incidencia</h3>
+            </div>
+            <form @submit.prevent="submitRevision">
+                <p class="text-muted font-xs mb-1">El empleado ha reportado el siguiente problema. Puedes modificar el texto antes de confirmar y enviar la notificación al cliente.</p>
+                
+                <div class="grid-cols-2" style="margin-bottom: 1rem; gap: 1rem; background: #f8fafc; padding: 0.75rem; border-radius: 0.5rem; font-size: 0.9rem;">
+                    <div><strong>Vehículo:</strong> <span x-text="modalRevision.orden?.vehiculoId"></span></div>
+                    <div><strong>Cliente:</strong> <span x-text="getNombreCliente(modalRevision.orden?.clienteId)"></span></div>
+                </div>
+
+                <label class="field-label">Descripción del Problema (Visible para el Cliente):</label>
+                <textarea x-model="modalRevision.descripcion" class="field-input" rows="5" required style="resize: vertical;"></textarea>
+                
+                <p x-cloak x-show="modalRevision.error" x-text="modalRevision.error" class="alert alert-error mt-1"></p>
+                
+                <div class="modal-footer" class="mt-3">
+                    <button type="button" @click="modalRevision.show = false" class="btn btn-ghost">Descartar Cambios</button>
+                    <button type="submit" class="btn btn-danger" style="background:#ef4444; border-color:#ef4444; color:white;" :disabled="modalRevision.loading">
+                        <span x-show="!modalRevision.loading">Confirmar Problema y Cerrar Orden</span>
+                        <span x-show="modalRevision.loading" class="spinner"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="encargado.js"></script>
+</body>
+</html>

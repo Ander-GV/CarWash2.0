@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="es" x-data="empleadoPage()" x-init="init()">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panel Empleado - CarWash</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css" />
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body>
+    <header class="topbar">
+        <h1 class="topbar-title">CarWash <span class="text-warning">Empleado</span></h1>
+        <div class="header-actions">
+            <span class="user-name" x-text="currentUser"></span>
+            <button @click="logout" class="btn btn-ghost btn-small">Cerrar sesión</button>
+        </div>
+    </header>
+
+    <main class="page-content">
+        <!-- Tabs -->
+        <div class="tabs mb-3">
+            <div class="tab" :class="{ 'active': view === 'tareas' }" @click="view = 'tareas'; cargarMisTareas()">Mis Tareas</div>
+            <div class="tab" :class="{ 'active': view === 'historial' }" @click="view = 'historial'; cargarMisTareas()">Historial</div>
+            <div class="tab" :class="{ 'active': view === 'comisiones' }" @click="view = 'comisiones'; cargarMisTareas()">Mis Comisiones</div>
+            <div class="tab" :class="{ 'active': view === 'analisis' }" @click="view = 'analisis'; renderChart()">Mi Rendimiento</div>
+            <div class="tab" :class="{ 'active': view === 'perfil' }" @click="view = 'perfil'">Mi Perfil</div>
+        </div>
+
+        <div x-cloak x-show="view === 'tareas'">
+            <div class="flex-between">
+                <div>
+                    <h2 class="section-title">Mis Tareas de Hoy</h2>
+                    <p class="text-muted section-subtitle">Vehículos que tienes asignados para lavar.</p>
+                </div>
+                <button @click="cargarMisTareas" class="btn btn-warning">
+                    Actualizar Tareas
+                </button>
+            </div>
+
+            <p x-cloak x-show="globalError" x-transition x-text="globalError" class="alert alert-error alert-margin mt-1"></p>
+            <p x-cloak x-show="globalSuccess" x-transition x-text="globalSuccess" class="alert alert-success alert-margin mt-1"></p>
+
+            <div x-cloak x-show="loading" class="text-center p-6">
+                <span class="spinner spinner-warning inline-block spinner-lg"></span>
+                <p class="text-muted mt-1">Cargando tareas...</p>
+            </div>
+
+            <div x-cloak x-show="!loading && tareas.length === 0" class="card p-6 text-center">
+                <p class="text-muted" class="text-lg">No tienes vehículos asignados en este momento. ¡Buen trabajo!</p>
+            </div>
+
+            <div class="task-grid">
+                <template x-for="tarea in tareasPaginadas()" :key="tarea.ordenCode">
+                    <div class="task-card" :class="tarea.estado">
+                        <div class="flex-between-start mb-1">
+                            <span class="badge" 
+                                  :class="tarea.estado === 'PENDIENTE' ? 'badge-admin' : (tarea.estado === 'EN_PROCESO' ? 'badge-empleado' : 'badge-encargado')" 
+                                  x-text="tarea.estado.replace('_', ' ')"></span>
+                            <span class="text-muted font-xs" x-text="formatTime(tarea.fechaInicio)"></span>
+                        </div>
+
+                        <div class="placa-badge" x-text="tarea.vehiculoId"></div>
+
+                        <div class="text-sm">
+                            <div><strong>Cliente:</strong> <span x-text="tarea.clienteId"></span></div>
+                            <div class="mt-1"><strong>Servicios a realizar:</strong></div>
+                            <ul class="service-list">
+                                <template x-for="srv in tarea.servicio">
+                                    <li x-text="srv.nombre"></li>
+                                </template>
+                            </ul>
+                        </div>
+
+                        <div class="mt-3">
+                            <button x-show="tarea.estado === 'PENDIENTE'" @click="cambiarEstado(tarea.ordenCode, 'EN_PROCESO')" class="btn btn-warning btn-block">
+                                Comenzar Lavado
+                            </button>
+                            <button x-show="tarea.estado === 'EN_PROCESO'" @click="cambiarEstado(tarea.ordenCode, 'ESPERANDO_CONFIRMACION')" class="btn btn-green btn-block mb-1">
+                                Marcar como Terminado
+                            </button>
+                            <button x-show="tarea.estado === 'EN_PROCESO'" @click="abrirModalProblema(tarea)" class="btn btn-danger btn-block btn-solid-red">
+                                Reportar Problema
+                            </button>
+                            <button x-show="tarea.estado === 'ESPERANDO_CONFIRMACION'" class="btn btn-block btn-disabled-gray" disabled>
+                                Esperando Confirmación...
+                            </button>
+                            <button x-show="tarea.estado === 'CON_PROBLEMAS'" class="btn btn-block btn-disabled-red" disabled>
+                                Lavado Detenido (Con Problemas)
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+            
+            <div x-show="tareas.length > elementosPorPagina" style="display: flex; justify-content: center; align-items: center; gap: 1rem; margin-top: 1.5rem;">
+                <button @click="cambiarPaginaTareas(-1)" :disabled="!hayPaginaAnteriorTareas()" class="btn btn-ghost" style="border: 1px solid #e2e8f0; background: white; border-radius: 4px; padding: 0.5rem 1rem;">&laquo; Anterior</button>
+                <span style="font-weight: 600; color: #64748b;" x-text="paginaTareas + ' / ' + Math.ceil(tareas.length / elementosPorPagina)"></span>
+                <button @click="cambiarPaginaTareas(1)" :disabled="!hayPaginaSiguienteTareas()" class="btn btn-ghost" style="border: 1px solid #e2e8f0; background: white; border-radius: 4px; padding: 0.5rem 1rem;">Siguiente &raquo;</button>
+            </div>
+        </div>
+
+        <div x-cloak x-show="view === 'historial'">
+            <div class="flex-between mb-2">
+                <div>
+                    <h2 class="section-title">Mis Lavados de Hoy</h2>
+                    <p class="text-muted section-subtitle mb-2">Todas las órdenes que has completado el día de hoy.</p>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>Orden</th>
+                        <th>Vehículo</th>
+                        <th>Fecha de Finalización</th>
+                        <th>Total</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <template x-for="orden in historialOrdenes()" :key="orden.ordenCode">
+                        <tr>
+                            <td><div class="td-strong" x-text="'#' + orden.ordenCode.substring(orden.ordenCode.length-4)"></div></td>
+                            <td x-text="orden.vehiculoId"></td>
+                            <td x-text="formatDate(orden.fechaFin)"></td>
+                            <td x-text="'$' + orden.total.toLocaleString()"></td>
+                        </tr>
+                    </template>
+                    <tr x-show="historialOrdenes().length === 0">
+                        <td colspan="4" class="text-center text-muted">No tienes órdenes en tu historial.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex-between" style="margin-top: 2rem; margin-bottom: 1rem;">
+                <div>
+                    <h2 class="section-title" style="color: #ef4444;">Mis Incidencias de Hoy</h2>
+                    <p class="text-muted section-subtitle mb-2">Vehículos en los que reportaste problemas hoy.</p>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>Orden</th>
+                        <th>Vehículo</th>
+                        <th>Fecha de Reporte</th>
+                        <th>Problema</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <template x-for="orden in incidenciasHoy()" :key="orden.ordenCode">
+                        <tr>
+                            <td><div class="td-strong" x-text="'#' + orden.ordenCode.substring(orden.ordenCode.length-4)"></div></td>
+                            <td x-text="orden.vehiculoId"></td>
+                            <td x-text="formatDate(orden.fechaFin)"></td>
+                            <td x-text="orden.descripcionProblema"></td>
+                        </tr>
+                    </template>
+                    <tr x-show="incidenciasHoy().length === 0">
+                        <td colspan="4" class="text-center text-muted">No tienes incidencias reportadas hoy. ¡Excelente trabajo!</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div x-cloak x-show="view === 'comisiones'">
+            <h2 class="section-title">Resumen de Comisiones</h2>
+            <p class="text-muted section-subtitle mb-2">Estimado de ganancias por los lavados completados hoy.</p>
+            
+            <div class="card" style="padding: 1.5rem; border-left: 4px solid var(--green); max-width: 600px;">
+                <h3 style="color: var(--green); margin-bottom: 0.5rem;">Cierre de Hoy</h3>
+                <p class="text-muted" class="mb-1">Lavados completados (Hoy): <strong x-text="lavadosHoy().length"></strong></p>
+                <p class="text-muted" class="mb-1 text-danger" x-show="incidenciasHoy().length > 0">Incidencias (No suman comisión): <strong x-text="incidenciasHoy().length"></strong></p>
+                <p class="text-muted" class="mb-1">Total facturado por tus servicios: <strong x-text="'$' + totalFacturadoHoy().toLocaleString()"></strong></p>
+                <div class="border-top-dashed">
+                    <p class="text-xl">
+                        Comisión Estimada (40%): <span class="text-secondary" x-text="'$' + (totalFacturadoHoy() * 0.40).toLocaleString()"></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div x-cloak x-show="view === 'analisis'" class="card mt-2">
+            <div style="margin-bottom: 1.5rem;">
+                <h3 class="mb-1">Mi Rendimiento (Power BI)</h3>
+                <p class="text-muted font-xs">Este reporte está integrado a través de Power BI.</p>
+            </div>
+            <div style="background: #f1f5f9; border-radius: 0.5rem; border: 1px dashed #cbd5e1; padding: 0.5rem; min-height: 400px; display: flex; align-items: center; justify-content: center;">
+                <p style="color: #64748b; font-size: 1rem;">Este panel está habilitado únicamente para administradores.</p>
+            </div>
+        </div>
+
+        <div x-cloak x-show="view === 'perfil'">
+            <div class="panel-section max-w-600">
+                <h3 style="margin-bottom: 1.5rem; color: #1e293b;">Actualización de Datos Personales</h3>
+                
+                <form @submit.prevent="updateProfile" class="form-stack">
+                    <div>
+                        <label class="field-label">Nombre</label>
+                        <input type="text" x-model="userData.nombre" class="field-input" required>
+                    </div>
+                    <div>
+                        <label class="field-label">Apellido</label>
+                        <input type="text" x-model="userData.apellido" class="field-input" required>
+                    </div>
+                    <div>
+                        <label class="field-label">Teléfono</label>
+                        <input type="tel" x-model="userData.telefono" class="field-input" required>
+                    </div>
+                    <div>
+                        <label class="field-label">Dirección</label>
+                        <input type="text" x-model="userData.direccion" class="field-input" required>
+                    </div>
+                    <div>
+                        <label class="field-label">Correo Electrónico</label>
+                        <input type="email" x-model="userData.correo" class="field-input" required>
+                    </div>
+
+                    <p x-show="updateMsg" x-text="updateMsg" :class="updateSuccess ? 'alert alert-success' : 'alert alert-error'" class="mt-2"></p>
+
+                    <button type="submit" class="btn btn-warning" :disabled="loadingProfile">
+                        <span x-show="!loadingProfile">Guardar Cambios</span>
+                        <span x-show="loadingProfile" class="spinner"></span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal Reportar Problema -->
+        <div x-cloak x-show="modalProblema.show" class="modal-overlay" x-transition>
+            <div class="modal-content max-w-600" @click.stop>
+                <div class="modal-header">
+                    <h3 class="modal-title" style="color: #ef4444;">Reportar Problema en el Vehículo</h3>
+                </div>
+                <form @submit.prevent="submitProblema">
+                    <p class="text-muted" style="margin-bottom: 1rem;">Describe detalladamente qué sucedió con el vehículo <strong x-text="modalProblema.tarea?.vehiculoId"></strong>. Esta información será revisada por el encargado.</p>
+                    
+                    <textarea x-model="modalProblema.descripcion" class="field-input" rows="4" placeholder="Ej: Durante el secado, noté que el espejo retrovisor derecho estaba suelto..." required style="resize: vertical;"></textarea>
+                    
+                    <p x-cloak x-show="modalProblema.error" x-text="modalProblema.error" class="alert alert-error mt-1"></p>
+                    
+                    <div class="modal-footer" class="mt-3">
+                        <button type="button" @click="modalProblema.show = false" class="btn btn-ghost">Cancelar</button>
+                        <button type="submit" class="btn btn-danger" class="btn-solid-red" :disabled="modalProblema.loading">
+                            <span x-show="!modalProblema.loading">Reportar e Interrumpir Lavado</span>
+                            <span x-show="modalProblema.loading" class="spinner"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script src="empleado.js"></script>
+</body>
+</html>

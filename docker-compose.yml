@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: carwash-mongodb
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+    networks:
+      - carwash_net
+
+  postgres:
+    image: postgres:15
+    container_name: carwash-postgres
+    environment:
+      POSTGRES_USER: ander
+      POSTGRES_PASSWORD: ander
+      POSTGRES_DB: carwash
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    networks:
+      - carwash_net
+
+  redis:
+    image: redis:alpine
+    container_name: carwash-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - carwash_net
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: carwash-n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=http://localhost:5678/
+    volumes:
+      - n8n_data:/home/node/.n8n
+    restart: unless-stopped
+    networks:
+      - carwash_net
+
+  backend:
+    build: .
+    container_name: carwash-backend
+    ports:
+      - "8080:8080"
+    environment:
+      # Sobrescribimos las variables de application.properties para que usen los nombres de los contenedores
+      - SPRING_MONGODB_URI=mongodb://mongodb:27017/CarWash
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/carwash
+    depends_on:
+      - mongodb
+      - postgres
+      - redis
+    restart: unless-stopped
+    networks:
+      - carwash_net
+
+  nginx:
+    image: nginx:alpine
+    container_name: carwash-frontend
+    ports:
+      - "80:80"
+    volumes:
+      # Montamos la carpeta frontend compilada en la ruta donde Nginx sirve los archivos estáticos
+      - ./frontend/dist:/usr/share/nginx/html:ro
+      # Montamos la configuración del proxy reverso
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - carwash_net
+
+networks:
+  carwash_net:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+  postgres_data:
+  redis_data:
+  n8n_data:
