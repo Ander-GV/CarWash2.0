@@ -4,15 +4,13 @@ services:
   n8n:
     image: docker.n8n.io/n8nio/n8n
     container_name: carwash-n8n
-    ports:
-      - "5678:5678"
     environment:
       - N8N_HOST=0.0.0.0
       - N8N_PORT=5678
-      - N8N_PROTOCOL=http
+      - N8N_PROTOCOL=https
       - NODE_ENV=production
       - N8N_SECURE_COOKIE=false
-      - WEBHOOK_URL=${N8N_WEBHOOK_URL} # Se leerá desde tu archivo .env en la máquina virtual
+      - WEBHOOK_URL=https://carwash2026.northeurope.cloudapp.azure.com:5678/
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
       - GENERIC_TIMEZONE=America/Bogota
     volumes:
@@ -51,6 +49,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
+      - "5678:5678"
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
