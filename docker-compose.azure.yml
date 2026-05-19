@@ -7,7 +7,7 @@ services:
     environment:
       - N8N_HOST=0.0.0.0
       - N8N_PORT=5678
-      - N8N_PROTOCOL=https
+      - N8N_PROTOCOL=http
       - NODE_ENV=production
       - N8N_SECURE_COOKIE=false
       - WEBHOOK_URL=https://carwash2026.northeurope.cloudapp.azure.com:5678/
