@@ -46,16 +46,7 @@ public class JwtUtil {
                 .compact();
     }
 
-    // Generar un token con 24 horas de validez para actualizar datos
-    public String generarTokenActualizacion(String userCode) {
-        return Jwts.builder()
-                .subject(userCode)
-                .claim("purpose", "update_data")
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + (24 * 60 * 60 * 1000))) // 24 horas
-                .signWith(key)
-                .compact();
-    }
+
 
     // Obtener el código de usuario a partir del token
     public String extraerUserCode(String token) {
