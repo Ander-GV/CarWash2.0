@@ -790,8 +790,6 @@ body {
 .pr-12 { padding-right: 3rem; }
 .relative { position: relative; }
 .max-w-30 { max-width: 30rem; }
-
-/* Responsive styles for search elements and dashboard layouts */
 .search-row {
     display: flex;
     align-items: flex-end;

@@ -19,7 +19,6 @@ public class DataInitializer {
     @Bean
     CommandLineRunner initAdmin(PersonaRepository personaRepository, RolRepository rolRepository, PasswordEncoder passwordEncoder, org.springframework.data.mongodb.core.MongoTemplate mongoTemplate) {
         return args -> {
-            // 0. Inicializar los roles en la colección de MongoDB si no existen
             String[] rolesDefinidos = {"ADMIN", "ENCARGADO", "EMPLEADO", "CLIENTE"};
             for (String rName : rolesDefinidos) {
                 if (!rolRepository.existsByNombreIgnoreCase(rName)) {
@@ -29,7 +28,6 @@ public class DataInitializer {
                 }
             }
 
-            // 0.5. Migrar roles antiguos de tipo String a objetos Rol en la colección "personas"
             try {
                 org.bson.Document query = new org.bson.Document();
                 java.util.List<org.bson.Document> rawPersonas = mongoTemplate.getCollection("personas").find(query).into(new java.util.ArrayList<>());
@@ -77,7 +75,6 @@ public class DataInitializer {
                 System.err.println("ERROR DataInitializer al migrar roles: " + e.getMessage());
             }
 
-            // 1. Limpiar duplicados de 'userCode' en la base de datos para evitar fallos de Query no única
             java.util.List<Persona> todas = personaRepository.findAll();
             java.util.Map<String, java.util.List<Persona>> agrupadas = todas.stream()
                 .filter(p -> p.getUserCode() != null)
@@ -86,14 +83,12 @@ public class DataInitializer {
             for (java.util.Map.Entry<String, java.util.List<Persona>> entry : agrupadas.entrySet()) {
                 java.util.List<Persona> duplicados = entry.getValue();
                 if (duplicados.size() > 1) {
-                    // Conservamos el primero y borramos el resto
                     for (int i = 1; i < duplicados.size(); i++) {
                         personaRepository.delete(duplicados.get(i));
                     }
                 }
             }
 
-            // 2. Limpiar duplicados de 'correo' en la base de datos
             todas = personaRepository.findAll();
             java.util.Map<String, java.util.List<Persona>> agrupadasPorCorreo = todas.stream()
                 .filter(p -> p.getCorreo() != null && !p.getCorreo().trim().isEmpty())
@@ -102,7 +97,6 @@ public class DataInitializer {
             for (java.util.Map.Entry<String, java.util.List<Persona>> entry : agrupadasPorCorreo.entrySet()) {
                 java.util.List<Persona> duplicados = entry.getValue();
                 if (duplicados.size() > 1) {
-                    // Conservamos el primero y borramos el resto
                     for (int i = 1; i < duplicados.size(); i++) {
                         personaRepository.delete(duplicados.get(i));
                     }
