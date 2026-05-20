@@ -39,7 +39,6 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody AuthRequestDTO dto, jakarta.servlet.http.HttpServletRequest request, HttpServletResponse response) {
         try {
-            System.out.println("DEBUG LOGIN: Recibido userCode=[" + dto.getUserCode() + "], passLength=" + (dto.getPassword() != null ? dto.getPassword().length() : 0));
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(dto.getUserCode(), dto.getPassword())
             );

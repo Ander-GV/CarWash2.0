@@ -26,7 +26,6 @@ public class DataInitializer {
                     Rol newRol = new Rol();
                     newRol.setNombre(rName);
                     rolRepository.save(newRol);
-                    System.out.println("DEBUG DataInitializer: Inicializado rol: " + rName);
                 }
             }
 
@@ -71,13 +70,11 @@ public class DataInitializer {
                         if (needsMigration) {
                             doc.put("roles", migratedRoles);
                             mongoTemplate.getCollection("personas").replaceOne(new org.bson.Document("_id", doc.get("_id")), doc);
-                            System.out.println("DEBUG DataInitializer: Migrados roles antiguos a objetos para usuario con id: " + doc.get("_id"));
                         }
                     }
                 }
             } catch (Exception e) {
                 System.err.println("ERROR DataInitializer al migrar roles: " + e.getMessage());
-                e.printStackTrace();
             }
 
             // 1. Limpiar duplicados de 'userCode' en la base de datos para evitar fallos de Query no única
@@ -89,7 +86,6 @@ public class DataInitializer {
             for (java.util.Map.Entry<String, java.util.List<Persona>> entry : agrupadas.entrySet()) {
                 java.util.List<Persona> duplicados = entry.getValue();
                 if (duplicados.size() > 1) {
-                    System.out.println("DEBUG DataInitializer: Detectados " + duplicados.size() + " registros para el userCode '" + entry.getKey() + "'. Limpiando duplicados...");
                     // Conservamos el primero y borramos el resto
                     for (int i = 1; i < duplicados.size(); i++) {
                         personaRepository.delete(duplicados.get(i));
@@ -106,7 +102,6 @@ public class DataInitializer {
             for (java.util.Map.Entry<String, java.util.List<Persona>> entry : agrupadasPorCorreo.entrySet()) {
                 java.util.List<Persona> duplicados = entry.getValue();
                 if (duplicados.size() > 1) {
-                    System.out.println("DEBUG DataInitializer: Detectados " + duplicados.size() + " registros para el correo '" + entry.getKey() + "'. Limpiando duplicados...");
                     // Conservamos el primero y borramos el resto
                     for (int i = 1; i < duplicados.size(); i++) {
                         personaRepository.delete(duplicados.get(i));
@@ -116,7 +111,6 @@ public class DataInitializer {
 
             // Siempre garantizar que exista el usuario admin de prueba con contraseña correcta
             String encodedPass = passwordEncoder.encode("admin123");
-            System.out.println("DEBUG DataInitializer: Hash generado para admin123: " + encodedPass);
 
             // Crear o actualizar el usuario 'admin' de prueba
             Persona adminTest = personaRepository.findByUserCode("admin")
@@ -137,7 +131,6 @@ public class DataInitializer {
             adminTest.setPassword(encodedPass);
             adminTest.setDisponibleHoy(true);
             personaRepository.save(adminTest);
-            System.out.println("DEBUG DataInitializer: Usuario 'admin' creado/actualizado con contraseña 'admin123'");
         };
     }
 }

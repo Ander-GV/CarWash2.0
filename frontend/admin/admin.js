@@ -68,19 +68,14 @@ function adminPage() { return { personal: [], clientes: [], servicios: [], tipos
             },
 
             async init() {
-                const rol = sessionStorage.getItem('rol');
-                console.log("DEBUG FRONTEND: init() invocado. Rol en sessionStorage =", rol);
-                
                 try {
                     const res = await fetch('/api/auth/me', { credentials: 'include' });
                     if (!res.ok) {
-                        console.log("DEBUG FRONTEND: /api/auth/me retornó error, redirigiendo a '/'");
                         window.location.href = '/';
                         return;
                     }
                     const data = await res.json();
                     if (data.rol !== 'ADMIN') {
-                        console.log("DEBUG FRONTEND: Rol obtenido del backend no es ADMIN:", data.rol);
                         window.location.href = '/';
                         return;
                     }
@@ -88,7 +83,6 @@ function adminPage() { return { personal: [], clientes: [], servicios: [], tipos
                     this.currentUser = 'Administrador';
                     this.cargarDatos();
                 } catch (e) {
-                    console.error("DEBUG FRONTEND: Error en init():", e);
                     window.location.href = '/';
                 }
             },
@@ -100,7 +94,6 @@ function adminPage() { return { personal: [], clientes: [], servicios: [], tipos
             },
 
             async cargarDatos() {
-                console.log("DEBUG FRONTEND: cargarDatos() iniciado.");
                 this.loading = true;
                 this.globalError = '';
                 try {
@@ -129,10 +122,8 @@ function adminPage() { return { personal: [], clientes: [], servicios: [], tipos
                     this.servicios = servicios;
                     this.tiposVehiculo = tipos;
                 } catch (e) {
-                    console.log("DEBUG FRONTEND: Error detectado en cargarDatos():", e.message, e);
                     this.globalError = 'Error al cargar los datos.';
                     if (e.message === '401') {
-                        console.log("DEBUG FRONTEND: Se detectó 401. Redirigiendo a logout.");
                         this.logout();
                     }
                 } finally {

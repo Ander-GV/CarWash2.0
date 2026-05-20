@@ -23,19 +23,8 @@ public class UserDetailsServiceImpl implements UserDetailsService{
     // Método principal de Spring Security que se ejecuta al intentar iniciar sesión
     @Override
     public UserDetails loadUserByUsername(String userCode) throws UsernameNotFoundException {
-        System.out.println("DEBUG: Buscando usuario en MongoDB con userCode: [" + userCode + "]");
         Persona persona = personaR.findByUserCode(userCode)
-        .orElseThrow(() -> {
-            System.out.println("DEBUG: Usuario NO encontrado: [" + userCode + "]");
-            return new UsernameNotFoundException("Usuario no encontrado: " + userCode);
-        });
-        
-        System.out.println("DEBUG: Usuario encontrado. Password en DB: [" + persona.getPassword() + "]");
-        
-        // Verificación manual para debug
-        org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder encoder = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
-        boolean matches = encoder.matches("admin123", persona.getPassword());
-        System.out.println("DEBUG: ¿admin123 coincide con el hash de la DB? -> " + matches);
+            .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + userCode));
         
         // Si es un cliente que inició por Google, su password será null y no puede entrar con contraseña normal
         if (persona.getPassword() == null) {

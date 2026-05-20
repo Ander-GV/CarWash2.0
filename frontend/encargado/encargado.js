@@ -48,19 +48,14 @@
                 formVehiculo: { placa: '', marca: '', modelo: '', color: '', year: '', tipoVehiculo: { id: '' } },
 
                 async init() {
-                    const rol = sessionStorage.getItem('rol');
-                    console.log("DEBUG FRONTEND: init() invocado para encargado. Rol en sessionStorage =", rol);
-                    
                     try {
                         const res = await fetch('/api/auth/me', { credentials: 'include' });
                         if (!res.ok) {
-                            console.log("DEBUG FRONTEND: /api/auth/me retornó error, redirigiendo a '/'");
                             window.location.href = '/';
                             return;
                         }
                         const data = await res.json();
                         if (data.rol !== 'ENCARGADO') {
-                            console.log("DEBUG FRONTEND: Rol obtenido del backend no es ENCARGADO:", data.rol);
                             window.location.href = '/';
                             return;
                         }
@@ -71,7 +66,6 @@
                         }
                         this.cargarDatosIniciales();
                     } catch (e) {
-                        console.error("DEBUG FRONTEND: Error en encargado init():", e);
                         window.location.href = '/';
                     }
                 },
