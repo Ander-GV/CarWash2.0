@@ -185,13 +185,14 @@
                         const res = await fetch(`/api/ordenes/cliente/${this.userData.userCode}`, { headers: this.getHeaders(), credentials: 'include' });
                         if(res.ok) {
                             const data = await res.json();
+                            const ordenesList = Array.isArray(data) ? data : (data.content || []);
                             const hoy = new Date().toDateString();
                             
-                            this.statsHistorial.totalCanceladas = data.filter(o => o.estado === 'CANCELADO').length;
-                            this.statsHoy.canceladas = data.filter(o => o.estado === 'CANCELADO' && o.fechaFin && this.parseDate(o.fechaFin).toDateString() === hoy).length;
+                            this.statsHistorial.totalCanceladas = ordenesList.filter(o => o.estado === 'CANCELADO').length;
+                            this.statsHoy.canceladas = ordenesList.filter(o => o.estado === 'CANCELADO' && o.fechaFin && this.parseDate(o.fechaFin).toDateString() === hoy).length;
 
                             
-                            this.ordenesHistorial = data.filter(o => o.estado === 'FINALIZADO' || o.estado === 'CANCELADO').sort((a,b) => {
+                            this.ordenesHistorial = ordenesList.filter(o => o.estado === 'FINALIZADO' || o.estado === 'CANCELADO').sort((a,b) => {
                                 const d1 = this.parseDate(a.fechaInicio);
                                 const d2 = this.parseDate(b.fechaInicio);
                                 return (d2 ? d2.getTime() : 0) - (d1 ? d1.getTime() : 0);
