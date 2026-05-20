@@ -69,7 +69,12 @@ function adminPage() { return { personal: [], clientes: [], servicios: [], tipos
 
             init() {
                 const rol = sessionStorage.getItem('rol');
-                if (!rol || rol !== 'ADMIN') { window.location.href = '/'; return; }
+                console.log("DEBUG FRONTEND: init() invocado. Rol en sessionStorage =", rol);
+                if (!rol || rol !== 'ADMIN') { 
+                    console.log("DEBUG FRONTEND: Redirigiendo a '/' porque el rol no es ADMIN. Rol =", rol);
+                    window.location.href = '/'; 
+                    return; 
+                }
                 this.currentUser = 'Administrador';
 
                 this.cargarDatos();
@@ -82,6 +87,7 @@ function adminPage() { return { personal: [], clientes: [], servicios: [], tipos
             },
 
             async cargarDatos() {
+                console.log("DEBUG FRONTEND: cargarDatos() iniciado.");
                 this.loading = true;
                 this.globalError = '';
                 try {
@@ -110,8 +116,12 @@ function adminPage() { return { personal: [], clientes: [], servicios: [], tipos
                     this.servicios = servicios;
                     this.tiposVehiculo = tipos;
                 } catch (e) {
+                    console.log("DEBUG FRONTEND: Error detectado en cargarDatos():", e.message, e);
                     this.globalError = 'Error al cargar los datos.';
-                    if (e.message === '401') this.logout();
+                    if (e.message === '401') {
+                        console.log("DEBUG FRONTEND: Se detectó 401. Redirigiendo a logout.");
+                        this.logout();
+                    }
                 } finally {
                     this.loading = false;
                 }
