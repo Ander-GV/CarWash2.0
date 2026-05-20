@@ -46,7 +46,7 @@
             <div class="tab" :class="{ 'active': view === 'ordenes' }" @click="view = 'ordenes'">Órdenes de Lavado</div>
             <div class="tab" :class="{ 'active': view === 'clientes' }" @click="view = 'clientes'">Gestión de Clientes</div>
             <div class="tab" :class="{ 'active': view === 'personal' }" @click="view = 'personal'">Gestión de Personal</div>
-            <div class="tab" :class="{ 'active': view === 'vehiculos' }" @click="view = 'vehiculos'; buscarVehiculosGlobal()">Gestión de Vehículos</div>
+            <div class="tab" :class="{ 'active': view === 'vehiculos' }" @click="view = 'vehiculos'">Gestión de Vehículos</div>
             <div class="tab" :class="{ 'active': view === 'analisis' }" @click="view = 'analisis'">Análisis (Power BI)</div>
         </div>
 
@@ -154,8 +154,8 @@
             </div>
         </div>
         <!-- Gestión Vehículos View -->
-        <div x-cloak x-show="view === 'vehiculos' || view === 'VEHICULO'" class="card" class="mt-2">
-            <div style="margin-bottom: 1.5rem; display: flex; align-items: flex-end; gap: 1rem; max-width: 40rem;">
+        <div x-cloak x-show="view === 'vehiculos' || view === 'VEHICULO'" class="card mt-2">
+            <div class="search-row p-3">
                 <div class="flex-1">
                     <label class="field-label">1. Documento del Cliente</label>
                     <input type="text" x-model="searchVehiculoDoc" class="field-input" placeholder="Ej. 12345678">

@@ -44,7 +44,7 @@
             <div class="tab" :class="{ 'active': activeTab === 'CLIENTE' }" @click="activeTab = 'CLIENTE'; searchQuery = ''">Clientes</div>
             <div class="tab" :class="{ 'active': activeTab === 'SERVICIO' }" @click="activeTab = 'SERVICIO'; searchQuery = ''">Servicios</div>
             <div class="tab" :class="{ 'active': activeTab === 'TIPO_VEHICULO' }" @click="activeTab = 'TIPO_VEHICULO'; searchQuery = ''">Tipos Vehículo</div>
-            <div class="tab" :class="{ 'active': activeTab === 'VEHICULO' }" @click="activeTab = 'VEHICULO'; searchQuery = ''; buscarVehiculosGlobal()">Vehículos</div>
+            <div class="tab" :class="{ 'active': activeTab === 'VEHICULO' }" @click="activeTab = 'VEHICULO'; searchQuery = ''">Vehículos</div>
             <div class="tab" :class="{ 'active': activeTab === 'ANALISIS' }" @click="activeTab = 'ANALISIS'; searchQuery = ''">Análisis (Power BI)</div>
         </div>
 
@@ -202,8 +202,8 @@
         </div>
 
         <!-- Gestión Vehículos View -->
-        <div x-cloak x-show="activeTab === 'vehiculos' || activeTab === 'VEHICULO'" class="card" class="mt-2">
-            <div class="flex items-end mb-3 gap-4" style="max-width: 40rem;">
+        <div x-cloak x-show="activeTab === 'vehiculos' || activeTab === 'VEHICULO'" class="card mt-2">
+            <div class="search-row p-3">
                 <div class="flex-1">
                     <label class="field-label">1. Documento del Cliente</label>
                     <input type="text" x-model="searchVehiculoDoc" class="field-input" placeholder="Ej. 12345678">
