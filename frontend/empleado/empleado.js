@@ -299,4 +299,5 @@
                 }
             }
         }
+        window.empleadoPage = empleadoPage;
 

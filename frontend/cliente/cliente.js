@@ -297,4 +297,5 @@
                 }
             }
         }
+window.clienteDashboard = clienteDashboard;
 

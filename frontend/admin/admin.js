@@ -721,3 +721,5 @@ if (!resp.ok) throw new Error('No se pudo eliminar permanentemente');
         }
     }
 }
+window.adminPage = adminPage;
+
