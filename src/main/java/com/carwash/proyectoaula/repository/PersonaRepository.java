@@ -36,4 +36,6 @@ public interface PersonaRepository extends MongoRepository<Persona, String> {
 
     @org.springframework.data.mongodb.repository.Query("{ 'roles.nombre': ?0 }")
     Optional<Persona> findTopByRolesNombreOrderByUserCodeDesc(String nombre);
+
+    Optional<Persona> findTopByUserCodeStartingWithOrderByUserCodeDesc(String prefix);
 }

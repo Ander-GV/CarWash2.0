@@ -43,7 +43,7 @@ public class PersonalServiceImpl implements PersonalService {
             default -> "EMP";
         };
         
-        Optional<Persona> ultimoDisponible = personaRepository.findTopByRolesNombreOrderByUserCodeDesc(rol.toUpperCase());
+        Optional<Persona> ultimoDisponible = personaRepository.findTopByUserCodeStartingWithOrderByUserCodeDesc(prefijo + "-");
         if (ultimoDisponible.isEmpty()) return prefijo + "-0001";
         
         String ultimoUserCode = ultimoDisponible.get().getUserCode();
