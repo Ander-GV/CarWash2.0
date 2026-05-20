@@ -37,7 +37,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody AuthRequestDTO dto, HttpServletResponse response) {
+    public ResponseEntity<?> login(@Valid @RequestBody AuthRequestDTO dto, jakarta.servlet.http.HttpServletRequest request, HttpServletResponse response) {
         try {
             System.out.println("DEBUG LOGIN: Recibido userCode=[" + dto.getUserCode() + "], passLength=" + (dto.getPassword() != null ? dto.getPassword().length() : 0));
             Authentication authentication = authenticationManager.authenticate(
@@ -60,8 +60,11 @@ public class AuthController {
             Cookie cookie = new Cookie("token", token);
             cookie.setHttpOnly(true);
             cookie.setPath("/");
-
-            cookie.setAttribute("SameSite", "Strict");
+            cookie.setAttribute("SameSite", "Lax");
+            // Set Secure flag if request is HTTPS or proxied as HTTPS
+            String xForwardedProto = request.getHeader("X-Forwarded-Proto");
+            boolean isSecure = request.isSecure() || "https".equalsIgnoreCase(xForwardedProto);
+            cookie.setSecure(isSecure);
             cookie.setMaxAge(3600);
 
             response.addCookie(cookie);
@@ -110,7 +113,10 @@ public class AuthController {
         Cookie cookie = new Cookie("token", null);
         cookie.setHttpOnly(true);
         cookie.setPath("/");
-        cookie.setAttribute("SameSite", "Strict");
+        cookie.setAttribute("SameSite", "Lax");
+        String xForwardedProto = request.getHeader("X-Forwarded-Proto");
+        boolean isSecure = request.isSecure() || "https".equalsIgnoreCase(xForwardedProto);
+        cookie.setSecure(isSecure);
         cookie.setMaxAge(0); 
         response.addCookie(cookie);
         return ResponseEntity.ok(Map.of("message", "Logout exitoso"));

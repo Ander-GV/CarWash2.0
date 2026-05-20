@@ -43,7 +43,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             Cookie cookie = new Cookie("token", token);
             cookie.setHttpOnly(true);
             cookie.setPath("/");
-            cookie.setAttribute("SameSite", "Strict");
+            cookie.setAttribute("SameSite", "Lax");
+            String xForwardedProto = request.getHeader("X-Forwarded-Proto");
+            boolean isSecure = request.isSecure() || "https".equalsIgnoreCase(xForwardedProto);
+            cookie.setSecure(isSecure);
             cookie.setMaxAge(3600);
             response.addCookie(cookie);
 
