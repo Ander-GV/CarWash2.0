@@ -51,7 +51,7 @@ public class UserDetailsServiceImpl implements UserDetailsService{
             true,
             true,
             persona.getRoles().stream()
-                .map(rol -> new SimpleGrantedAuthority("ROLE_" + rol.name()))
+                .map(rol -> new SimpleGrantedAuthority("ROLE_" + rol.getNombre()))
                 .collect(Collectors.toList())
         );
     }

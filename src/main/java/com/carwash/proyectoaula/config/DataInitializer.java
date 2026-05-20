@@ -9,15 +9,27 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.carwash.proyectoaula.model.entity.Persona;
-import com.carwash.proyectoaula.model.enums.Rol;
+import com.carwash.proyectoaula.model.entity.Rol;
 import com.carwash.proyectoaula.repository.PersonaRepository;
+import com.carwash.proyectoaula.repository.RolRepository;
 
 @Configuration
 public class DataInitializer {
 
     @Bean
-    CommandLineRunner initAdmin(PersonaRepository personaRepository, PasswordEncoder passwordEncoder) {
+    CommandLineRunner initAdmin(PersonaRepository personaRepository, RolRepository rolRepository, PasswordEncoder passwordEncoder) {
         return args -> {
+            // 0. Inicializar los roles en la colección de MongoDB si no existen
+            String[] rolesDefinidos = {"ADMIN", "ENCARGADO", "EMPLEADO", "CLIENTE"};
+            for (String rName : rolesDefinidos) {
+                if (!rolRepository.existsByNombreIgnoreCase(rName)) {
+                    Rol newRol = new Rol();
+                    newRol.setNombre(rName);
+                    rolRepository.save(newRol);
+                    System.out.println("DEBUG DataInitializer: Inicializado rol: " + rName);
+                }
+            }
+
             // 1. Limpiar duplicados de 'userCode' en la base de datos para evitar fallos de Query no única
             java.util.List<Persona> todas = personaRepository.findAll();
             java.util.Map<String, java.util.List<Persona>> agrupadas = todas.stream()
@@ -67,7 +79,9 @@ public class DataInitializer {
             adminTest.setDireccion("Sistema CarWash");
             adminTest.setActivo(true);
             Set<Rol> roles = new HashSet<>();
-            roles.add(Rol.ADMIN);
+            Rol adminRol = rolRepository.findByNombreIgnoreCase("ADMIN")
+                .orElseThrow(() -> new RuntimeException("Rol ADMIN no encontrado en base de datos"));
+            roles.add(adminRol);
             adminTest.setRoles(roles);
             adminTest.setUserCode("admin");
             adminTest.setPassword(encodedPass);

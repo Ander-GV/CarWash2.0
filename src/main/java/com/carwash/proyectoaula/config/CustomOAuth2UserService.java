@@ -15,8 +15,9 @@ import org.springframework.stereotype.Service;
 
 import com.carwash.proyectoaula.model.entity.ClienteDetalles;
 import com.carwash.proyectoaula.model.entity.Persona;
-import com.carwash.proyectoaula.model.enums.Rol;
+import com.carwash.proyectoaula.model.entity.Rol;
 import com.carwash.proyectoaula.repository.PersonaRepository;
+import com.carwash.proyectoaula.repository.RolRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final PersonaRepository personaRepository;
+    private final RolRepository rolRepository;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -44,8 +46,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             boolean changed = false;
             
             // Asegurar rol CLIENTE
-            if (!persona.getRoles().contains(Rol.CLIENTE)) {
-                persona.getRoles().add(Rol.CLIENTE);
+            boolean tieneClienteRol = persona.getRoles().stream()
+                .anyMatch(r -> r.getNombre().equalsIgnoreCase("CLIENTE"));
+            if (!tieneClienteRol) {
+                Rol clienteRol = rolRepository.findByNombreIgnoreCase("CLIENTE")
+                    .orElseThrow(() -> new RuntimeException("Rol CLIENTE no encontrado en base de datos"));
+                persona.getRoles().add(clienteRol);
                 changed = true;
             }
 
@@ -68,7 +74,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         }
 
         Collection<? extends GrantedAuthority> authorities = persona.getRoles().stream()
-                .map(rol -> new SimpleGrantedAuthority("ROLE_" + rol.name()))
+                .map(rol -> new SimpleGrantedAuthority("ROLE_" + rol.getNombre()))
                 .collect(Collectors.toList());
 
         // Retornar un DefaultOAuth2User con los roles reales

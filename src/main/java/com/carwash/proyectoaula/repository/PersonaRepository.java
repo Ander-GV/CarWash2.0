@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 import com.carwash.proyectoaula.model.entity.Persona;
-import com.carwash.proyectoaula.model.enums.Rol;
+import com.carwash.proyectoaula.model.entity.Rol;
 
 @Repository
 public interface PersonaRepository extends MongoRepository<Persona, String> {
@@ -30,4 +30,10 @@ public interface PersonaRepository extends MongoRepository<Persona, String> {
     List<Persona> findByRolesContaining(Rol rol);
 
     Optional<Persona> findTopByRolesContainingOrderByUserCodeDesc(Rol rol);
+
+    @org.springframework.data.mongodb.repository.Query("{ 'roles.nombre': ?0 }")
+    List<Persona> findByRolesNombre(String nombre);
+
+    @org.springframework.data.mongodb.repository.Query("{ 'roles.nombre': ?0 }")
+    Optional<Persona> findTopByRolesNombreOrderByUserCodeDesc(String nombre);
 }

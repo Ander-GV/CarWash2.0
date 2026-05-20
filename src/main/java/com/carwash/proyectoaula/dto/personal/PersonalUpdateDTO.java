@@ -1,6 +1,6 @@
 package com.carwash.proyectoaula.dto.personal;
 
-import com.carwash.proyectoaula.model.enums.Rol;
+
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -32,7 +32,7 @@ public class PersonalUpdateDTO {
     private String direccion;
 
     @NotNull(message = "El rol es obligatorio")
-    private Rol rol;
+    private String rol;
 
     @NotNull(message = "El estado es obligatorio")
     private boolean activo;

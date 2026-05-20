@@ -13,8 +13,9 @@ import com.carwash.proyectoaula.dto.personal.PersonalResponseDTO;
 import com.carwash.proyectoaula.dto.personal.PersonalUpdateDTO;
 import com.carwash.proyectoaula.mapper.PersonalMapper;
 import com.carwash.proyectoaula.model.entity.Persona;
-import com.carwash.proyectoaula.model.enums.Rol;
+import com.carwash.proyectoaula.model.entity.Rol;
 import com.carwash.proyectoaula.repository.PersonaRepository;
+import com.carwash.proyectoaula.repository.RolRepository;
 import com.carwash.proyectoaula.service.PersonalService;
 
 // Implementación de la lógica para gestionar empleados, encargados y administradores
@@ -25,21 +26,24 @@ public class PersonalServiceImpl implements PersonalService {
     private PersonaRepository personaRepository;
 
     @Autowired
+    private RolRepository rolRepository;
+
+    @Autowired
     private PersonalMapper personalMapper;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
 
     // Genera automáticamente un código único según el rol (ej. EMP-0001)
-    private String generarUserCode(Rol rol){
-        String prefijo = switch(rol){
-            case ADMIN -> "ADM";
-            case ENCARGADO -> "ENC";
-            case EMPLEADO -> "EMP";
+    private String generarUserCode(String rol){
+        String prefijo = switch(rol.toUpperCase()){
+            case "ADMIN" -> "ADM";
+            case "ENCARGADO" -> "ENC";
+            case "EMPLEADO" -> "EMP";
             default -> "EMP";
         };
         
-        Optional<Persona> ultimoDisponible = personaRepository.findTopByRolesContainingOrderByUserCodeDesc(rol);
+        Optional<Persona> ultimoDisponible = personaRepository.findTopByRolesNombreOrderByUserCodeDesc(rol.toUpperCase());
         if (ultimoDisponible.isEmpty()) return prefijo + "-0001";
         
         String ultimoUserCode = ultimoDisponible.get().getUserCode();
@@ -58,7 +62,7 @@ public class PersonalServiceImpl implements PersonalService {
     // Devuelve la lista completa de todos los administradores
     @Override
     public List<PersonalResponseDTO> listarAdmin(){
-        return personaRepository.findByRolesContaining(Rol.ADMIN)
+        return personaRepository.findByRolesNombre("ADMIN")
         .stream()
         .map(personalMapper::toPersonalResponseDTO)
         .collect(Collectors.toList());
@@ -67,7 +71,7 @@ public class PersonalServiceImpl implements PersonalService {
     // Devuelve la lista completa de encargados
     @Override
     public List<PersonalResponseDTO> listarEncargado(){
-        return personaRepository.findByRolesContaining(Rol.ENCARGADO)
+        return personaRepository.findByRolesNombre("ENCARGADO")
         .stream()
         .map(personalMapper::toPersonalResponseDTO)
         .collect(Collectors.toList());
@@ -76,7 +80,7 @@ public class PersonalServiceImpl implements PersonalService {
     // Devuelve la lista completa de empleados
     @Override
     public List<PersonalResponseDTO> listarEmpleados(){
-        return personaRepository.findByRolesContaining(Rol.EMPLEADO)
+        return personaRepository.findByRolesNombre("EMPLEADO")
         .stream()
         .map(personalMapper::toPersonalResponseDTO)
         .collect(Collectors.toList());
@@ -118,9 +122,11 @@ public class PersonalServiceImpl implements PersonalService {
         Persona persona = personaRepository.findByUserCode(userCode)
         .orElseThrow(() -> new IllegalArgumentException("Personal no encontrado"));
 
-        if(dto.getRol() != null && !persona.getRoles().contains(dto.getRol())){
+        if(dto.getRol() != null && !persona.getRoles().stream().anyMatch(r -> r.getNombre().equalsIgnoreCase(dto.getRol()))){
             persona.getRoles().clear();
-            persona.getRoles().add(dto.getRol());
+            Rol dbRol = rolRepository.findByNombreIgnoreCase(dto.getRol())
+                .orElseThrow(() -> new IllegalArgumentException("Rol no encontrado: " + dto.getRol()));
+            persona.getRoles().add(dbRol);
             persona.setUserCode(generarUserCode(dto.getRol()));
         }
 

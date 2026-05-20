@@ -3,7 +3,6 @@ package com.carwash.proyectoaula.dto.personal;
 
 
 import com.carwash.proyectoaula.dto.PersonaDTO;
-import com.carwash.proyectoaula.model.enums.Rol;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -19,7 +18,7 @@ import lombok.Setter;
 public class PersonalCreateDTO extends PersonaDTO {
 
     @NotNull(message = "El rol es obligatorio")
-    private Rol rol;
+    private String rol;
 
     @NotBlank(message = "La contraseña es obligatoria")
     private String password;

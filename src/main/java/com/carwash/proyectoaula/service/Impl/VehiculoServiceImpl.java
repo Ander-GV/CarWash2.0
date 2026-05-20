@@ -11,7 +11,6 @@ import com.carwash.proyectoaula.dto.vehiculo.VehiculoResponseDTO;
 import com.carwash.proyectoaula.dto.vehiculo.VehiculoUpdateDTO;
 import com.carwash.proyectoaula.mapper.VehiculoMapper;
 import com.carwash.proyectoaula.model.entity.Persona;
-import com.carwash.proyectoaula.model.enums.Rol;
 import com.carwash.proyectoaula.model.entity.Vehiculo;
 import com.carwash.proyectoaula.repository.PersonaRepository;
 import com.carwash.proyectoaula.repository.TipoVehiculoRepository;

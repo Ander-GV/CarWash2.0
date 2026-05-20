@@ -12,7 +12,7 @@ import com.carwash.proyectoaula.dto.cliente.ClienteResponseDTO;
 import com.carwash.proyectoaula.dto.cliente.ClienteUpdateDTO;
 import com.carwash.proyectoaula.mapper.ClienteMapper;
 import com.carwash.proyectoaula.model.entity.Persona;
-import com.carwash.proyectoaula.model.enums.Rol;
+import com.carwash.proyectoaula.model.entity.Rol;
 import com.carwash.proyectoaula.repository.PersonaRepository;
 import com.carwash.proyectoaula.service.ClienteService;
 import com.carwash.proyectoaula.service.EmailService;
@@ -44,7 +44,7 @@ public class ClienteServiceImpl implements ClienteService {
     // Listar a todos los usuarios que tienen el rol de CLIENTE
     @Override
     public List<ClienteResponseDTO> listarClientes(){
-        return personaRepository.findByRolesContaining(Rol.CLIENTE)
+        return personaRepository.findByRolesNombre("CLIENTE")
         .stream()
         .map(clienteMapper::toClienteResponseDTO)
         .collect(Collectors.toList());
@@ -55,7 +55,7 @@ public class ClienteServiceImpl implements ClienteService {
     @Override
     public ClienteResponseDTO buscarCliente(String userCode){
         return personaRepository.findByUserCode(userCode)
-        .filter(p -> p.getRoles().contains(Rol.CLIENTE))
+        .filter(p -> p.getRoles().stream().anyMatch(r -> r.getNombre().equalsIgnoreCase("CLIENTE")))
         .map(clienteMapper::toClienteResponseDTO)
         .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
     } 
@@ -92,7 +92,7 @@ public class ClienteServiceImpl implements ClienteService {
     public ClienteResponseDTO actualizarCliente(String userCode, ClienteUpdateDTO dto){
         
         Persona persona = personaRepository.findByUserCode(userCode)
-        .filter(p -> p.getRoles().contains(Rol.CLIENTE))
+        .filter(p -> p.getRoles().stream().anyMatch(r -> r.getNombre().equalsIgnoreCase("CLIENTE")))
         .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
 
         persona.setNombre(dto.getNombre());
@@ -107,7 +107,7 @@ public class ClienteServiceImpl implements ClienteService {
     @Override
     public void eliminarCliente(String userCode){
         Persona persona = personaRepository.findByUserCode(userCode)
-        .filter(p -> p.getRoles().contains(Rol.CLIENTE))
+        .filter(p -> p.getRoles().stream().anyMatch(r -> r.getNombre().equalsIgnoreCase("CLIENTE")))
         .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
         personaRepository.delete(persona);
     }

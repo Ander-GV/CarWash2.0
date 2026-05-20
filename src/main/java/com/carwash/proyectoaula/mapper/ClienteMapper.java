@@ -5,13 +5,18 @@ import org.springframework.stereotype.Component;
 import com.carwash.proyectoaula.dto.cliente.ClienteCreateDTO;
 import com.carwash.proyectoaula.dto.cliente.ClienteResponseDTO;
 import com.carwash.proyectoaula.model.entity.Persona;
-import com.carwash.proyectoaula.model.enums.Rol;
+import com.carwash.proyectoaula.model.entity.Rol;
+import com.carwash.proyectoaula.repository.RolRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashSet;
 import java.util.Set;
 
 @Component
 public class ClienteMapper {
+
+    @Autowired
+    private RolRepository rolRepository;
     
     public Persona toCliente(ClienteCreateDTO dto){
         if(dto == null){
@@ -28,7 +33,9 @@ public class ClienteMapper {
         persona.setActivo(dto.isActivo());
         
         Set<Rol> roles = new HashSet<>();
-        roles.add(Rol.CLIENTE);
+        Rol clienteRol = rolRepository.findByNombreIgnoreCase("CLIENTE")
+            .orElseThrow(() -> new RuntimeException("Rol CLIENTE no encontrado en base de datos"));
+        roles.add(clienteRol);
         persona.setRoles(roles);
         
         return persona;
