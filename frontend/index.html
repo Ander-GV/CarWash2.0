@@ -100,7 +100,14 @@
                             body: JSON.stringify({ userCode: this.userCode, password: this.password })
                         });
 
-                        const data = await resp.json();
+                        let data = {};
+                        const contentType = resp.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            data = await resp.json();
+                        } else {
+                            const text = await resp.text();
+                            data = { error: text || `Error del servidor (${resp.status})` };
+                        }
 
                         if (!resp.ok) {
                             this.error = data.error || 'Credenciales inválidas. Intente de nuevo.';
@@ -112,6 +119,7 @@
                         this.redirectToRole(data.rol);
 
                     } catch (e) {
+                        console.error("DEBUG LOGIN ERROR:", e);
                         this.error = 'No se pudo conectar con el servidor. Verifique que el Backend esté corriendo.';
                     } finally {
                         this.loading = false;
