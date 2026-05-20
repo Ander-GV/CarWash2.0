@@ -261,7 +261,7 @@
                                 <template x-for="ord in historialOrdenesVehiculo" :key="ord.ordenCode">
                                     <tr>
                                         <td x-text="ord.ordenCode"></td>
-                                        <td x-text="ord.fechaInicio ? new Date(ord.fechaInicio).toLocaleDateString() : ''"></td>
+                                        <td x-text="formatDate(ord.fechaInicio)"></td>
                                         <td><span class="badge" class="badge-sky" x-text="ord.estado"></span></td>
                                         <td class="td-strong" x-text="'$' + ord.total"></td>
                                     </tr>

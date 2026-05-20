@@ -717,6 +717,21 @@ if (!resp.ok) throw new Error('No se pudo eliminar permanentemente');
             } catch (e) { this.modalVehiculoGlobal.error = e.message; }
             finally { this.modalVehiculoGlobal.loading = false; }
         },
+        parseDate(dateInput) {
+            if (!dateInput) return null;
+            if (Array.isArray(dateInput)) {
+                return new Date(Date.UTC(dateInput[0], dateInput[1] - 1, dateInput[2], dateInput[3] || 0, dateInput[4] || 0, dateInput[5] || 0));
+            }
+            if (typeof dateInput === 'string' && !dateInput.endsWith('Z') && dateInput.includes('T')) {
+                return new Date(dateInput + 'Z');
+            }
+            return new Date(dateInput);
+        },
+
+        formatDate(dateInput) {
+            const d = this.parseDate(dateInput);
+            return d ? d.toLocaleDateString() : '';
+        },
                 
         async eliminarVehiculoGlobal(placa) {
             if (!confirm('¿Eliminar vehículo?')) return;
