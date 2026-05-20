@@ -17,7 +17,7 @@ import com.carwash.proyectoaula.repository.RolRepository;
 public class DataInitializer {
 
     @Bean
-    CommandLineRunner initAdmin(PersonaRepository personaRepository, RolRepository rolRepository, PasswordEncoder passwordEncoder) {
+    CommandLineRunner initAdmin(PersonaRepository personaRepository, RolRepository rolRepository, PasswordEncoder passwordEncoder, org.springframework.data.mongodb.core.MongoTemplate mongoTemplate) {
         return args -> {
             // 0. Inicializar los roles en la colección de MongoDB si no existen
             String[] rolesDefinidos = {"ADMIN", "ENCARGADO", "EMPLEADO", "CLIENTE"};
@@ -28,6 +28,56 @@ public class DataInitializer {
                     rolRepository.save(newRol);
                     System.out.println("DEBUG DataInitializer: Inicializado rol: " + rName);
                 }
+            }
+
+            // 0.5. Migrar roles antiguos de tipo String a objetos Rol en la colección "personas"
+            try {
+                org.bson.Document query = new org.bson.Document();
+                java.util.List<org.bson.Document> rawPersonas = mongoTemplate.getCollection("personas").find(query).into(new java.util.ArrayList<>());
+                for (org.bson.Document doc : rawPersonas) {
+                    Object rolesObj = doc.get("roles");
+                    if (rolesObj instanceof java.util.List) {
+                        java.util.List<?> rolesList = (java.util.List<?>) rolesObj;
+                        boolean needsMigration = false;
+                        java.util.List<org.bson.Document> migratedRoles = new java.util.ArrayList<>();
+                        
+                        for (Object r : rolesList) {
+                            if (r instanceof String) {
+                                String rName = (String) r;
+                                needsMigration = true;
+                                Rol dbRol = rolRepository.findByNombreIgnoreCase(rName)
+                                    .orElseGet(() -> {
+                                        Rol newRol = new Rol();
+                                        newRol.setNombre(rName.toUpperCase());
+                                        return rolRepository.save(newRol);
+                                    });
+                                
+                                Object idVal;
+                                if (dbRol.getId() != null && org.bson.types.ObjectId.isValid(dbRol.getId())) {
+                                    idVal = new org.bson.types.ObjectId(dbRol.getId());
+                                } else {
+                                    idVal = dbRol.getId();
+                                }
+                                
+                                org.bson.Document dbRolDoc = new org.bson.Document();
+                                dbRolDoc.put("_id", idVal);
+                                dbRolDoc.put("nombre", dbRol.getNombre());
+                                migratedRoles.add(dbRolDoc);
+                            } else if (r instanceof org.bson.Document) {
+                                migratedRoles.add((org.bson.Document) r);
+                            }
+                        }
+                        
+                        if (needsMigration) {
+                            doc.put("roles", migratedRoles);
+                            mongoTemplate.getCollection("personas").replaceOne(new org.bson.Document("_id", doc.get("_id")), doc);
+                            System.out.println("DEBUG DataInitializer: Migrados roles antiguos a objetos para usuario con id: " + doc.get("_id"));
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("ERROR DataInitializer al migrar roles: " + e.getMessage());
+                e.printStackTrace();
             }
 
             // 1. Limpiar duplicados de 'userCode' en la base de datos para evitar fallos de Query no única
