@@ -48,12 +48,12 @@
             <div class="tab" :class="{ 'active': activeTab === 'ANALISIS' }" @click="activeTab = 'ANALISIS'; searchQuery = ''">Análisis (Power BI)</div>
         </div>
 
-        <div class="flex items-center mb-3 gap-2" style="max-width: 24rem;" x-show="activeTab !== 'VEHICULO'">
+        <div class="flex items-center mb-3 gap-2" style="max-width: 24rem;" x-show="activeTab !== 'VEHICULO' && activeTab !== 'ANALISIS'">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             <input type="text" x-model="searchQuery" class="field-input" placeholder="Buscar por documento, correo o código...">
         </div>
 
-        <div class="card" x-show="activeTab !== 'VEHICULO'">
+        <div class="card" x-show="activeTab !== 'VEHICULO' && activeTab !== 'ANALISIS'">
             <div class="table-wrapper">
                 <table class="table" x-show="activeTab !== 'SERVICIO' && activeTab !== 'TIPO_VEHICULO'">
                     <thead>
@@ -284,7 +284,7 @@
         </div>
 
         <!-- Análisis Power BI -->
-        <div x-cloak x-show="activeTab === 'ANALISIS'" class="card" class="mt-2">
+        <div x-cloak x-show="activeTab === 'ANALISIS'" class="card mt-2">
             <div class="mb-3">
                 <h3 class="text-main mb-1">Dashboard de Análisis Institucional</h3>
                 <p class="text-muted font-xs">Este reporte está integrado a través de Power BI.</p>
