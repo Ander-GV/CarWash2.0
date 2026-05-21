@@ -24,6 +24,8 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
             OAuth2AuthenticationException oauth2Exception = (OAuth2AuthenticationException) exception;
             if ("email_not_registered".equals(oauth2Exception.getError().getErrorCode())) {
                 targetUrl += "not_registered";
+            } else if ("user_inactive".equals(oauth2Exception.getError().getErrorCode())) {
+                targetUrl += "user_inactive";
             } else {
                 targetUrl += "auth_failed";
             }

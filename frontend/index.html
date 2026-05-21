@@ -68,6 +68,9 @@
                     if (urlParams.get('error') === 'not_registered') {
                         this.error = 'Tu correo no está registrado en el sistema. Solicita acceso al administrador.';
                         window.history.replaceState({}, document.title, window.location.pathname);
+                    } else if (urlParams.get('error') === 'user_inactive') {
+                        this.error = 'El usuario se encuentra inactivo y no puede iniciar sesión.';
+                        window.history.replaceState({}, document.title, window.location.pathname);
                     } else if (urlParams.get('error')) {
                         this.error = 'Error de autenticación.';
                         window.history.replaceState({}, document.title, window.location.pathname);

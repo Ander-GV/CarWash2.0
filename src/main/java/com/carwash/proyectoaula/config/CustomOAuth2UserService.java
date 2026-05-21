@@ -65,6 +65,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 changed = true;
             }
 
+            if (!persona.isActivo()) {
+                throw new OAuth2AuthenticationException("user_inactive");
+            }
+
             if (changed) {
                 personaRepository.save(persona);
             }
