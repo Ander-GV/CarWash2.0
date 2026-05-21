@@ -95,7 +95,7 @@ public class ClienteServiceImpl implements ClienteService {
         persona.setTelefono(dto.getTelefono());
         persona.setCorreo(dto.getCorreo());
         persona.setDireccion(dto.getDireccion());
-        persona.setActivo(dto.isActivo());
+        persona.setClienteActivo(dto.isActivo());
 
         return clienteMapper.toClienteResponseDTO(personaRepository.save(persona));
     }

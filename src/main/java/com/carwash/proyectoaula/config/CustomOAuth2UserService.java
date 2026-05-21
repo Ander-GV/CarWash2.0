@@ -65,7 +65,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 changed = true;
             }
 
-            if (!persona.isActivo()) {
+            if (!persona.isClienteActivo()) {
                 throw new OAuth2AuthenticationException("user_inactive");
             }
 

@@ -30,7 +30,7 @@ public class ClienteMapper {
         persona.setTelefono(dto.getTelefono());
         persona.setDireccion(dto.getDireccion());
         persona.setDocumento(dto.getDocumento());
-        persona.setActivo(dto.isActivo());
+        persona.setClienteActivo(dto.isActivo());
         
         Set<Rol> roles = new HashSet<>();
         Rol clienteRol = rolRepository.findByNombreIgnoreCase("CLIENTE")
@@ -53,7 +53,7 @@ public class ClienteMapper {
         dto.setTelefono(persona.getTelefono());
         dto.setDireccion(persona.getDireccion());
         dto.setDocumento(persona.getDocumento());
-        dto.setActivo(persona.isActivo());
+        dto.setActivo(persona.isClienteActivo());
         dto.setUserCode(persona.getUserCode());
         dto.setId(persona.getId());
         return dto;

@@ -41,4 +41,10 @@ public class Persona {
 
     // Campos de cliente embebidos
     private ClienteDetalles clienteDetalles;
+
+    private Boolean clienteActivo;
+
+    public boolean isClienteActivo() {
+        return clienteActivo == null ? activo : clienteActivo;
+    }
 }
