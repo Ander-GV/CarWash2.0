@@ -7,7 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
+import jakarta.validation.constraints.NotNull;
 @Getter @Setter
 @AllArgsConstructor
 @NoArgsConstructor
@@ -35,4 +35,7 @@ public class ClienteUpdateDTO {
 
     @NotBlank(message = "La direccion es obligatoria")
     private String direccion;
+
+    @NotNull(message = "El estado es obligatorio")
+    private boolean activo;
 }
