@@ -46,8 +46,6 @@ public class JwtFilter extends OncePerRequestFilter {
             }
         }
 
-        String requestURI = request.getRequestURI();
-
         if (token != null && !token.isEmpty()) {
 
             // Si el token está en la lista negra (cerró sesión), se rechaza de inmediato
@@ -83,11 +81,6 @@ public class JwtFilter extends OncePerRequestFilter {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.setContentType("application/json");
                 response.getWriter().write("{\"error\": \"Token expirado\"}");
-                return;
-            } catch (Exception e) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.setContentType("application/json");
-                response.getWriter().write("{\"error\": \"Error de autenticación\"}");
                 return;
             }
         }
