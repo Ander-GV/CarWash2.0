@@ -125,6 +125,15 @@ public class DataInitializer {
             adminTest.setPassword(encodedPass);
             adminTest.setDisponibleHoy(true);
             personaRepository.save(adminTest);
+
+            // Asegurar de emergencia que cualquier administrador real (como ADM-0001) esté activo siempre
+            java.util.List<Persona> todosLosAdmins = personaRepository.findByRolesNombre("ADMIN");
+            for (Persona p : todosLosAdmins) {
+                if (!p.isActivo()) {
+                    p.setActivo(true);
+                    personaRepository.save(p);
+                }
+            }
         };
     }
 }

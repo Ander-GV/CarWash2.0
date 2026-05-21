@@ -223,7 +223,7 @@ public class OrdenServiceImpl implements OrdenService{
         OrdenDeLavado ordenGuardada = ordenRepository.save(orden);
 
         // Notificación automática a n8n cuando se finaliza o hay problemas
-        if (("FINALIZADO".equalsIgnoreCase(dto.getEstado()) || "CON_PROBLEMAS".equalsIgnoreCase(dto.getEstado())) && ordenGuardada.getFechaFin() != null) {
+        if ("FINALIZADO".equalsIgnoreCase(dto.getEstado()) || "CON_PROBLEMAS".equalsIgnoreCase(dto.getEstado())) {
             String encargadoCode = "";
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth != null && auth.isAuthenticated()) {

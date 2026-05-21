@@ -192,7 +192,7 @@
                             const hoy = new Date().toDateString();
                             
                             this.statsHistorial.totalCanceladas = ordenesList.filter(o => o.estado === 'CANCELADO').length;
-                            this.statsHoy.canceladas = ordenesList.filter(o => o.estado === 'CANCELADO' && o.fechaFin && this.parseDate(o.fechaFin).toDateString() === hoy).length;
+                            this.statsHoy.canceladas = ordenesList.filter(o => o.estado === 'CANCELADO' && ((o.fechaFin && this.parseDate(o.fechaFin).toDateString() === hoy) || (o.fechaInicio && this.parseDate(o.fechaInicio).toDateString() === hoy))).length;
 
                             
                             this.ordenesHistorial = ordenesList.filter(o => o.estado === 'FINALIZADO' || o.estado === 'CANCELADO').sort((a,b) => {
@@ -201,7 +201,11 @@
                                 return (d2 ? d2.getTime() : 0) - (d1 ? d1.getTime() : 0);
                             });
                             
-                            this.ordenesHoy = this.ordenesHistorial.filter(o => o.fechaFin && this.parseDate(o.fechaFin).toDateString() === hoy);
+                            this.ordenesHoy = ordenesList.filter(o => o.fechaInicio && this.parseDate(o.fechaInicio).toDateString() === hoy).sort((a,b) => {
+                                const d1 = this.parseDate(a.fechaInicio);
+                                const d2 = this.parseDate(b.fechaInicio);
+                                return (d2 ? d2.getTime() : 0) - (d1 ? d1.getTime() : 0);
+                            });
                             
                             const finalizadasHistorial = this.ordenesHistorial.filter(o => o.estado === 'FINALIZADO');
                             const finalizadasHoy = this.ordenesHoy.filter(o => o.estado === 'FINALIZADO');

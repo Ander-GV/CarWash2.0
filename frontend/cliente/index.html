@@ -64,9 +64,15 @@
                                             <div class="text-xs text-muted line-through" x-text="'$'+orden.total.toLocaleString()"></div>
                                         </div>
                                     </template>
-                                    <template x-if="orden.estado !== 'CANCELADO'">
+                                    <template x-if="orden.estado === 'FINALIZADO'">
                                         <div>
                                             <div class="text-bold-green">+10 Pts</div>
+                                            <div class="text-xs text-muted" x-text="'$'+orden.total.toLocaleString()"></div>
+                                        </div>
+                                    </template>
+                                    <template x-if="orden.estado !== 'CANCELADO' && orden.estado !== 'FINALIZADO'">
+                                        <div>
+                                            <div class="text-bold-blue" x-text="orden.estado.replace('_', ' ')"></div>
                                             <div class="text-xs text-muted" x-text="'$'+orden.total.toLocaleString()"></div>
                                         </div>
                                     </template>
