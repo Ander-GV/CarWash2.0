@@ -22,10 +22,29 @@ public class ordenUpdateEstadoDTO {
     // Aceptamos el ID viejo para que el frontend no se rompa
     private Integer estadoId;
 
-    private LocalDateTime fechaFin;
+    private String fechaFin;
 
     private String descripcionProblema;
     
+    public LocalDateTime getFechaFinAsLocalDateTime() {
+        if (this.fechaFin == null || this.fechaFin.isEmpty()) {
+            return null;
+        }
+        try {
+            // Eliminar la 'Z' y milisegundos si vienen de JavaScript toISOString()
+            String parseable = this.fechaFin;
+            if (parseable.endsWith("Z")) {
+                parseable = parseable.substring(0, parseable.length() - 1);
+            }
+            if (parseable.contains(".")) {
+                parseable = parseable.substring(0, parseable.indexOf("."));
+            }
+            return LocalDateTime.parse(parseable);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     // Si el frontend manda un ID, lo convertimos automáticamente a String
     public String getEstado() {
         if (this.estado != null && !this.estado.isEmpty()) {

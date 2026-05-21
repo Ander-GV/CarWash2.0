@@ -204,8 +204,8 @@ public class OrdenServiceImpl implements OrdenService{
 
         orden.setEstado(dto.getEstado());
 
-        if(dto.getFechaFin() != null){
-            orden.setFechaFin(dto.getFechaFin());
+        if(dto.getFechaFinAsLocalDateTime() != null){
+            orden.setFechaFin(dto.getFechaFinAsLocalDateTime());
         } else if ("FINALIZADO".equalsIgnoreCase(dto.getEstado()) || "CANCELADO".equalsIgnoreCase(dto.getEstado())) {
             orden.setFechaFin(LocalDateTime.now());
         }
