@@ -86,7 +86,7 @@
                             <button x-show="est.nombre === 'ESPERANDO_CONFIRMACION'" @click="confirmarOrden(orden.ordenCode)" class="btn btn-green btn-block btn-xs mt-1">
                                 Aprobar Lavado y Notificar
                             </button>
-                            <button x-show="est.esIncidencia" @click="abrirModalRevision(orden)" class="btn btn-danger btn-block btn-xs mt-1" style="background-color: #ef4444; border-color: #ef4444; color: white;">
+                            <button x-show="est.nombre === 'CON_PROBLEMAS'" @click="abrirModalRevision(orden)" class="btn btn-danger btn-block btn-xs mt-1" style="background-color: #ef4444; border-color: #ef4444; color: white;">
                                 Revisar Incidencia
                             </button>
                         </div>
