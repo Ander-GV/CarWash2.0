@@ -249,7 +249,7 @@ function adminPage() { return { personal: [], clientes: [], servicios: [], tipos
                         activo: this.form.activo
                     };
 
-                    if (isCreate) {
+                    if (isCreate || isCliente) {
                         bodyData.documento = this.form.documento;
                     }
 
