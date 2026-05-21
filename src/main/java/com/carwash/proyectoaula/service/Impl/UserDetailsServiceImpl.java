@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.carwash.proyectoaula.model.entity.Persona;
@@ -22,6 +23,7 @@ public class UserDetailsServiceImpl implements UserDetailsService{
 
     // Método principal de Spring Security que se ejecuta al intentar iniciar sesión
     @Override
+    @Cacheable(value = "users", key = "#userCode")
     public UserDetails loadUserByUsername(String userCode) throws UsernameNotFoundException {
         Persona persona = personaR.findByUserCode(userCode)
             .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + userCode));

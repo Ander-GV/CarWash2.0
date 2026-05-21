@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -117,6 +118,7 @@ public class PersonalServiceImpl implements PersonalService {
 
     // Edita la información de un empleado, incluyendo si se le cambió de rol o contraseña
     @Override
+    @CacheEvict(value = "users", key = "#userCode")
     public PersonalResponseDTO actualizarPersonal(String userCode, PersonalUpdateDTO dto){
 
         Persona persona = personaRepository.findByUserCode(userCode)
@@ -148,6 +150,7 @@ public class PersonalServiceImpl implements PersonalService {
 
     // Despide o elimina el registro de un miembro del personal permanentemente
     @Override
+    @CacheEvict(value = "users", key = "#userCode")
     public void eliminarPersonal(String userCode){
         Persona persona = personaRepository.findByUserCode(userCode)
         .orElseThrow(() -> new IllegalArgumentException("Personal no encontrado"));
@@ -156,6 +159,7 @@ public class PersonalServiceImpl implements PersonalService {
 
     // Marca de forma rápida si un empleado asistió hoy a trabajar o está disponible
     @Override
+    @CacheEvict(value = "users", key = "#userCode")
     public void cambiarDisponibilidad(String userCode, boolean disponible){
         Persona persona = personaRepository.findByUserCode(userCode)
         .orElseThrow(() -> new IllegalArgumentException("Personal no encontrado"));

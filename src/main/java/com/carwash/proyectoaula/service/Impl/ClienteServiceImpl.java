@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import com.carwash.proyectoaula.dto.cliente.ClienteCreateDTO;
@@ -15,8 +16,7 @@ import com.carwash.proyectoaula.model.entity.Persona;
 import com.carwash.proyectoaula.model.entity.Rol;
 import com.carwash.proyectoaula.repository.PersonaRepository;
 import com.carwash.proyectoaula.service.ClienteService;
-import com.carwash.proyectoaula.service.EmailService;
-import com.carwash.proyectoaula.config.JwtUtil;
+
 
 // Implementación de la lógica de negocio para gestionar Clientes
 @Service
@@ -28,11 +28,7 @@ public class ClienteServiceImpl implements ClienteService {
     @Autowired
     private ClienteMapper clienteMapper;
 
-    @Autowired
-    private EmailService emailService;
 
-    @Autowired
-    private JwtUtil jwtUtil;
 
 
     // Generar un código único secuencial para cada cliente (ej. CLI-0001)
@@ -78,9 +74,7 @@ public class ClienteServiceImpl implements ClienteService {
         persona.setUserCode(generadorUserCode());
         Persona guardado = personaRepository.save(persona);
 
-        // Generar token y notificar por n8n (webhook)
-        String token = jwtUtil.generarTokenActualizacion(guardado.getUserCode());
-        emailService.enviarTokenActualizacion(guardado.getCorreo(), token);
+
 
         return clienteMapper.toClienteResponseDTO(guardado);
 
@@ -89,6 +83,7 @@ public class ClienteServiceImpl implements ClienteService {
 
     // Actualizar datos de un cliente existente
     @Override
+    @CacheEvict(value = "users", key = "#userCode")
     public ClienteResponseDTO actualizarCliente(String userCode, ClienteUpdateDTO dto){
         
         Persona persona = personaRepository.findByUserCode(userCode)
@@ -105,6 +100,7 @@ public class ClienteServiceImpl implements ClienteService {
 
     // Borrar cliente de forma definitiva
     @Override
+    @CacheEvict(value = "users", key = "#userCode")
     public void eliminarCliente(String userCode){
         Persona persona = personaRepository.findByUserCode(userCode)
         .filter(p -> p.getRoles().stream().anyMatch(r -> r.getNombre().equalsIgnoreCase("CLIENTE")))
