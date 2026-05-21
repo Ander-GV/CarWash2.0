@@ -18,6 +18,15 @@ services:
       - n8n_data:/home/node/.n8n
     restart: always
 
+  redis:
+    image: redis:alpine
+    container_name: carwash-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+
   backend:
     # La Máquina Virtual construirá la imagen del código fuente directamente
     build: .
@@ -27,9 +36,9 @@ services:
     environment:
       # Pasamos las variables dinámicas al contenedor desde el .env
       - MONGO_URI=${MONGO_URI}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-      - REDIS_SSL=${REDIS_SSL}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_SSL=false
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - DB_URL=${DB_URL}
       - DB_USER=${DB_USER}
@@ -38,6 +47,8 @@ services:
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - OAUTH_REDIRECT_URI=${OAUTH_REDIRECT_URI}
+    depends_on:
+      - redis
     restart: always
 
   nginx:
@@ -58,3 +69,4 @@ services:
 
 volumes:
   n8n_data:
+  redis_data:
