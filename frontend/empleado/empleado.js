@@ -60,7 +60,8 @@
                     this.loading = true;
                     this.globalError = '';
                     try {
-                        const res = await fetch('/api/ordenes?size=1000&sort=fechaInicio,desc', { headers: this.getHeaders(), credentials: 'include' });
+                        const t = Date.now();
+                        const res = await fetch(`/api/ordenes?size=1000&sort=fechaInicio,desc&_t=${t}`, { headers: this.getHeaders(), credentials: 'include' });
                         if(res.ok) {
                             const data = await res.json();
                             const todas = Array.isArray(data) ? data : (data.content || []);
