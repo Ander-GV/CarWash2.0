@@ -85,10 +85,10 @@
                             </button>
                             <button x-show="est.nombre === 'ESPERANDO_CONFIRMACION'" 
                                 @click="confirmarOrden(orden.ordenCode)" 
-                                :disabled="confirmandoOrdenes[orden.ordenCode]"
+                                :disabled="confirmandoOrdenes[orden.ordenCode] === true"
                                 class="btn btn-green btn-block btn-xs mt-1">
-                                <span x-show="!confirmandoOrdenes[orden.ordenCode]">Aprobar Lavado y Notificar</span>
-                                <span x-show="confirmandoOrdenes[orden.ordenCode]">⏳ Procesando...</span>
+                                <span x-show="confirmandoOrdenes[orden.ordenCode] !== true">Aprobar Lavado y Notificar</span>
+                                <span x-show="confirmandoOrdenes[orden.ordenCode] === true">⏳ Procesando...</span>
                             </button>
                             <button x-show="est.nombre === 'CON_PROBLEMAS'" @click="abrirModalRevision(orden)" class="btn btn-danger btn-block btn-xs mt-1" style="background-color: #ef4444; border-color: #ef4444; color: white;">
                                 Revisar Incidencia

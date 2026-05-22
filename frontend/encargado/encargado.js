@@ -542,9 +542,15 @@
                 },
 
                 async confirmarOrden(id) {
-                    if (this.confirmandoOrdenes[id]) return; // Guard contra doble click
+                    console.log("Click en confirmarOrden para la orden:", id);
+                    if (this.confirmandoOrdenes[id]) {
+                        console.log("Orden ya se está confirmando, ignorando click duplicado:", id);
+                        return; 
+                    }
+                    console.log("Estableciendo confirmandoOrdenes para la orden:", id);
                     this.confirmandoOrdenes = { ...this.confirmandoOrdenes, [id]: true };
                     try {
+                        console.log("Realizando fetch PATCH a /api/ordenes/" + id + "/estado");
                         const res = await fetch(`/api/ordenes/${id}/estado`, {
                             method: 'PATCH',
                             headers: this.getHeaders(),
@@ -554,15 +560,19 @@
                         
                         if(!res.ok) {
                             const errorText = await res.text();
+                            console.error("Error devuelto por la API:", errorText);
                             throw new Error(`Error: ${errorText}`);
                         }
+                        console.log("Estado de orden actualizado con éxito.");
                         this.globalSuccess = 'Lavado aprobado y cliente notificado.';
                         setTimeout(() => this.globalSuccess = '', 3000);
                         this.cargarOrdenes();
                     } catch(e) {
+                        console.error("Error al confirmar orden:", e);
                         this.globalError = e.message;
                         setTimeout(() => this.globalError = '', 4000);
                     } finally {
+                        console.log("Limpiando confirmandoOrdenes para la orden:", id);
                         const copy = { ...this.confirmandoOrdenes };
                         delete copy[id];
                         this.confirmandoOrdenes = copy;
