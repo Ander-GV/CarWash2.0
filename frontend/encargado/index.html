@@ -86,7 +86,7 @@
                             <button x-show="est.nombre === 'ESPERANDO_CONFIRMACION'" 
                                 @click="confirmarOrden(orden.ordenCode)" 
                                 :disabled="confirmandoOrdenes[orden.ordenCode] === true"
-                                class="btn btn-green btn-block btn-xs mt-1">
+                                :class="confirmandoOrdenes[orden.ordenCode] === true ? 'btn btn-disabled-gray btn-block btn-xs mt-1' : 'btn btn-green btn-block btn-xs mt-1'">
                                 <span x-show="confirmandoOrdenes[orden.ordenCode] !== true">Aprobar Lavado y Notificar</span>
                                 <span x-show="confirmandoOrdenes[orden.ordenCode] === true">⏳ Procesando...</span>
                             </button>

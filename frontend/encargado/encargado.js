@@ -572,8 +572,8 @@
                         console.error("Error al confirmar orden:", e);
                         this.globalError = e.message;
                         setTimeout(() => this.globalError = '', 4000);
-                    } finally {
-                        console.log("Limpiando confirmandoOrdenes para la orden:", id);
+                        
+                        console.log("Restaurando estado habilitado por error para la orden:", id);
                         const copy = { ...this.confirmandoOrdenes };
                         delete copy[id];
                         this.confirmandoOrdenes = copy;
