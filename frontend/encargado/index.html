@@ -80,26 +80,19 @@
                             </div>
 
                             <!-- Action Buttons -->
-                            <template x-if="est.nombre === 'PENDIENTE'">
-                                <button @click="cancelarOrden(orden.ordenCode)" class="btn btn-danger btn-block btn-xs mt-1" style="background-color: #ef4444; border-color: #ef4444; color: white; padding: 0.25rem;">
-                                    Cancelar Orden
-                                </button>
-                            </template>
-                            <template x-if="est.nombre === 'ESPERANDO_CONFIRMACION'">
-                                <button 
-                                    @click="confirmarOrden(orden.ordenCode)" 
-                                    :disabled="confirmandoOrdenes[orden.ordenCode]"
-                                    class="btn btn-green btn-block btn-xs mt-1"
-                                    :style="confirmandoOrdenes[orden.ordenCode] ? 'opacity:0.6; cursor:not-allowed;' : ''">
-                                    <span x-show="!confirmandoOrdenes[orden.ordenCode]">Aprobar Lavado y Notificar</span>
-                                    <span x-show="confirmandoOrdenes[orden.ordenCode]">⏳ Procesando...</span>
-                                </button>
-                            </template>
-                            <template x-if="est.nombre === 'CON_PROBLEMAS'">
-                                <button @click="abrirModalRevision(orden)" class="btn btn-danger btn-block btn-xs mt-1" style="background-color: #ef4444; border-color: #ef4444; color: white;">
-                                    Revisar Incidencia
-                                </button>
-                            </template>
+                            <button x-show="est.nombre === 'PENDIENTE'" @click="cancelarOrden(orden.ordenCode)" class="btn btn-danger btn-block btn-xs mt-1" style="background-color: #ef4444; border-color: #ef4444; color: white; padding: 0.25rem;">
+                                Cancelar Orden
+                            </button>
+                            <button x-show="est.nombre === 'ESPERANDO_CONFIRMACION'" 
+                                @click="confirmarOrden(orden.ordenCode)" 
+                                :disabled="confirmandoOrdenes[orden.ordenCode]"
+                                class="btn btn-green btn-block btn-xs mt-1">
+                                <span x-show="!confirmandoOrdenes[orden.ordenCode]">Aprobar Lavado y Notificar</span>
+                                <span x-show="confirmandoOrdenes[orden.ordenCode]">⏳ Procesando...</span>
+                            </button>
+                            <button x-show="est.nombre === 'CON_PROBLEMAS'" @click="abrirModalRevision(orden)" class="btn btn-danger btn-block btn-xs mt-1" style="background-color: #ef4444; border-color: #ef4444; color: white;">
+                                Revisar Incidencia
+                            </button>
                         </div>
                     </template>
                     <div x-show="ordenesPorEstado(est.nombre).length === 0" class="text-muted text-center mt-1" class="text-sm">Vacío</div>

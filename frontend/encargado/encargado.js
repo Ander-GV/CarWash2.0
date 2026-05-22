@@ -543,7 +543,7 @@
 
                 async confirmarOrden(id) {
                     if (this.confirmandoOrdenes[id]) return; // Guard contra doble click
-                    this.confirmandoOrdenes[id] = true;
+                    this.confirmandoOrdenes = { ...this.confirmandoOrdenes, [id]: true };
                     try {
                         const res = await fetch(`/api/ordenes/${id}/estado`, {
                             method: 'PATCH',
@@ -563,7 +563,9 @@
                         this.globalError = e.message;
                         setTimeout(() => this.globalError = '', 4000);
                     } finally {
-                        delete this.confirmandoOrdenes[id];
+                        const copy = { ...this.confirmandoOrdenes };
+                        delete copy[id];
+                        this.confirmandoOrdenes = copy;
                     }
                 },
                 
