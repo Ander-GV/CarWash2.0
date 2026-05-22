@@ -135,6 +135,7 @@ public class OrdenServiceImpl implements OrdenService{
         orden.setServicio(serviciosEmbebidos);
         orden.setTotal(total);
         orden.setOrdenCode(generarCodigo());
+        orden.setFechaInicio(LocalDateTime.now());
 
         return ordenMapper.toResponse(ordenRepository.save(orden));
 
