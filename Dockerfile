@@ -12,4 +12,4 @@ WORKDIR /app
 # Copiar el archivo .jar generado en la fase anterior
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Duser.timezone=America/Bogota", "-jar", "app.jar"]
