@@ -182,7 +182,7 @@
 
                 async cargarOrdenes() {
                     try {
-                        const res = await fetch(`/api/ordenes/cliente/${this.userData.userCode}`, { headers: this.getHeaders(), credentials: 'include' });
+                        const res = await fetch(`/api/ordenes/cliente/${this.userData.userCode}?size=1000&sort=fechaInicio,desc`, { headers: this.getHeaders(), credentials: 'include' });
                         if(res.ok) {
                             const data = await res.json();
                             const ordenesList = Array.isArray(data) ? data : (data.content || []);

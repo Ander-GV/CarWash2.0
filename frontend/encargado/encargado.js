@@ -9,6 +9,7 @@
                 estados: [],
                 globalError: '',
                 globalSuccess: '',
+                confirmandoOrdenes: {},
                 
                 paginaServicios: 1,
                 serviciosPorPagina: 4,
@@ -147,6 +148,7 @@
                 },
 
                 async submitCrudForm() {
+                    if (this.modalCrud.loading) return;
                     this.modalCrud.loading = true;
                     this.modalCrud.error = '';
                     try {
@@ -236,6 +238,7 @@
                 },
 
                 async submitVehiculoGlobal() {
+                    if (this.modalVehiculo.loading) return;
                     this.modalVehiculo.loading = true;
                     try {
                         const url = `/api/vehiculos/${this.formVehiculoGlobal.placa}`;
@@ -428,6 +431,7 @@
                 },
 
                 async buscarCliente() {
+                    if (this.modal.loading) return;
                     this.modal.loading = true;
                     this.modal.error = '';
                     try {
@@ -462,6 +466,7 @@
                         this.modal.error = 'Llene al menos placa y tipo de vehículo.';
                         return;
                     }
+                    if (this.modal.loading) return;
                     this.modal.loading = true;
                     this.modal.error = '';
                     try {
@@ -495,6 +500,7 @@
                 },
 
                 async submitOrder() {
+                    if (this.modal.loading) return;
                     this.modal.loading = true;
                     this.modal.error = '';
                     try {
@@ -536,6 +542,8 @@
                 },
 
                 async confirmarOrden(id) {
+                    if (this.confirmandoOrdenes[id]) return; // Guard contra doble click
+                    this.confirmandoOrdenes[id] = true;
                     try {
                         const res = await fetch(`/api/ordenes/${id}/estado`, {
                             method: 'PATCH',
@@ -548,11 +556,14 @@
                             const errorText = await res.text();
                             throw new Error(`Error: ${errorText}`);
                         }
-                        this.globalSuccess = 'Lavado aprobado y cliente notificado (Simulación).';
+                        this.globalSuccess = 'Lavado aprobado y cliente notificado.';
                         setTimeout(() => this.globalSuccess = '', 3000);
                         this.cargarOrdenes();
                     } catch(e) {
                         this.globalError = e.message;
+                        setTimeout(() => this.globalError = '', 4000);
+                    } finally {
+                        delete this.confirmandoOrdenes[id];
                     }
                 },
                 
@@ -564,6 +575,7 @@
                 },
                 
                 async submitRevision() {
+                    if (this.modalRevision.loading) return;
                     this.modalRevision.loading = true;
                     this.modalRevision.error = '';
                     try {

@@ -251,6 +251,7 @@
                 },
                 
                 async submitProblema() {
+                    if (this.modalProblema.loading) return;
                     this.modalProblema.loading = true;
                     this.modalProblema.error = '';
                     try {
